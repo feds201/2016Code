@@ -67,18 +67,12 @@ void MotorController::enable()
 
 void MotorController::setControlMode(CANTalon::ControlMode controlmode)
 {
-	printf("1\n");
 	struct mclist *l=list;
-	printf("2\n");
 	l->motor->SetControlMode(controlmode);
-	printf("3\n");
 	while(l->next)
 	{
-		printf("4\n");
 		l = l->next;
-		printf("5\n");
 		l->motor->SetControlMode(controlmode);
-		printf("6\n");
 	}
 }
 

@@ -31,7 +31,7 @@ class Robot: public SampleRobot
 
 public:
 	Robot() :
-			controller_driver(0),
+			controller_driver(5),
 			controller_operator(1)
 	{
 		shifter = new DoubleSolenoidController(5, 0, 1);
@@ -81,14 +81,14 @@ public:
 			if(btn_B.isRising())
 			{
 				percent += .05;
-				percent = percent > 1.0f ? 1.0f : (percent < -1.0f ? 0.0f : percent);
+				percent = percent > 1.0f ? 1.0f : (percent < 0.0f ? 0.0f : percent);
 
 				std->setPercent(percent);
 			}
 			if(btn_X.isRising())
 			{
 				percent -= .05;
-				percent = percent > 1.0f ? 1.0f : (percent < -1.0f ? 0.0f : percent);
+				percent = percent > 1.0f ? 1.0f : (percent < 0.0f ? 0.0f : percent);
 
 				std->setPercent(percent);
 			}
@@ -102,7 +102,7 @@ public:
 					timerUp++;
 					if(timerUp >= 0)
 					{
-						std->setgear(1);
+						std->setGear(1);
 						currGear = 1;
 						timerUp = 0;
 					}
@@ -121,7 +121,7 @@ public:
 					timerDown++;
 					if(timerDown >= 0)
 					{
-						std->setgear(0);
+						std->setGear(0);
 						currGear = 0;
 						timerDown = 0;
 					}

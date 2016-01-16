@@ -7,19 +7,17 @@
 
 #include "ShiftTankDrive.h"
 #include "cmath"
+#include <iostream>
 
 ShiftTankDrive::ShiftTankDrive(MotorController *motors_left, MotorController *motors_right, DoubleSolenoidController *solenoids)
 :motors_left(motors_left),
  motors_right(motors_right),
  solenoids(solenoids)
 {
-	printf("SIX!\n");
 	motors_left->setControlMode(CANTalon::ControlMode::kPercentVbus);
 
-	printf("SEVEN!\n");
 	motors_left->enable();
 
-	printf("EIGHT!\n");
 	motors_right->setControlMode(CANTalon::ControlMode::kPercentVbus);
 	motors_right->enable();
 }
