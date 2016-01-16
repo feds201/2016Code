@@ -48,6 +48,19 @@ public:
 		compressor->SetClosedLoopControl(true);
 	}
 
+	float deadband(float f)
+	{
+		if(fabs(f)<.15)
+			return 0.0f;
+		else
+		{
+			if(f>0)
+				return (f-.15)/(1-.15);
+			else
+				return (f+.15)/(1-.15);
+		}
+	}
+
 	void Autonomous()
 	{
 	}
@@ -57,20 +70,21 @@ public:
 		EdgeDetection btn_A(false);
 		EdgeDetection btn_B(false);
 		EdgeDetection btn_X(false);
+		EdgeDetection btn_Y(false);
 
-		int gear=0;
 		float percent=.5;
 
 
 		int timerUp = 0;
 		int timerDown = 0;
 		int currGear = 0;
-		double su = 0.60;
-		double sl = 0.40;
-		double alpha = 1.65;
+		float su = 0.60;
+		float sl = 0.40;
+		float alpha = 1.65;
 
-		double phi = (alpha - su)/(alpha*(1 - su));
-		double gamma = (su - su*alpha)/(alpha*(1 - su));
+		float phi = (alpha - su)/(alpha*(1 - su));
+		float gamma = (su - su*alpha)/(alpha*(1 - su));
+		bool is_auto = false;
 
 		while (IsOperatorControl() && IsEnabled())
 		{
@@ -92,74 +106,98 @@ public:
 
 				std->setPercent(percent);
 			}
-
-			double forward = -controller_driver.GetAxis(Joystick::AxisType::kYAxis);
-			if(currGear == 0)
+			if(btn_Y.isRising())
 			{
-				if(fabs(forward) >= su)
-				{
-					timerDown = 0;
-					timerUp++;
-					if(timerUp >= 0)
-					{
-						std->setGear(1);
-						currGear = 1;
-						timerUp = 0;
-					}
-				}
-				else
-				{
-					timerUp = 0;
-					timerDown = 0;
-				}
+				is_auto = !is_auto;
+				timerDown = 0;
+				timerUp = 0;
 			}
-			else
+
+			float forward = deadband(-controller_driver.GetRawAxis(1));
+			float rot = deadband(-controller_driver.GetRawAxis(4))*.7;
+			if(is_auto)
 			{
-				if(fabs(forward) <= sl)
+				if(currGear == 0)
 				{
-					timerUp = 0;
-					timerDown++;
-					if(timerDown >= 0)
+					if(fabs(forward) >= su)
 					{
-						std->setGear(0);
-						currGear = 0;
+						timerDown = 0;
+						timerUp++;
+						if(timerUp >= 0)
+						{
+							std->setGear(1);
+							currGear = 1;
+							timerUp = 0;
+						}
+					}
+					else
+					{
+						timerUp = 0;
 						timerDown = 0;
 					}
 				}
 				else
 				{
-					timerDown = 0;
-					timerUp = 0;
-				}
-			}
-
-			if(currGear == 0)
-			{
-				std->setcontrol(-controller_driver.GetAxis(Joystick::AxisType::kYAxis),-controller_driver.GetAxis(Joystick::AxisType::kTwistAxis));
-			}
-			if(currGear == 1)
-			{
-				double forward = controller_driver.GetAxis(Joystick::AxisType::kYAxis);
-				if(fabs(forward) <= su)
-				{
-					forward /= alpha;
-				}
-				else
-				{
-					if(forward >= 0)
+					if(fabs(forward) <= sl)
 					{
-						forward *= phi;
-						forward += gamma;
+						timerUp = 0;
+						timerDown++;
+						if(timerDown >= 0)
+						{
+							std->setGear(0);
+							currGear = 0;
+							timerDown = 0;
+						}
 					}
 					else
 					{
-						forward *= phi;
-						forward -= gamma;
+						timerDown = 0;
+						timerUp = 0;
 					}
 				}
-				std->setcontrol(-forward,-controller_driver.GetAxis(Joystick::AxisType::kTwistAxis));
+				if(currGear == 0)
+				{
+					std->setcontrol(forward,rot);
+				}
+				if(currGear == 1)
+				{
+					if(fabs(forward) <= su)
+					{
+						forward /= alpha;
+					}
+					else
+					{
+						if(forward >= 0)
+						{
+							forward *= phi;
+							forward += gamma;
+						}
+						else
+						{
+							forward *= phi;
+							forward -= gamma;
+						}
+					}
+					std->setcontrol(forward,rot);
+				}
 			}
-
+			else
+			{
+				if(btn_A.isRising())
+				{
+					if(currGear == 1)
+					{
+						std->setGear(0);
+						currGear = 0;
+					}
+					else if(currGear == 0)
+					{
+						std->setGear(1);
+						currGear = 1;
+					}
+				}
+				std->setcontrol(forward, rot);
+			}
 			Wait(0.03);
 		}
 	}
