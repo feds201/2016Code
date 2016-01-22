@@ -4,6 +4,7 @@
 #include "MotorController.h"
 #include "ShiftTankDrive.h"
 #include "EdgeDetection.h"
+#include "Logger.h"
 
 /**
  * This is a demo program showing the use of the RobotDrive class.
@@ -24,10 +25,13 @@ class Robot: public SampleRobot
 	MotorController *motors_right;
 
 	DoubleSolenoidController *shifter;
+	Servo *servi;
 
 	ShiftTankDrive *std;
 
 	Compressor *compressor;
+
+	CANTalon *talon;
 
 public:
 	Robot() :
@@ -36,6 +40,7 @@ public:
 	{
 		shifter = new DoubleSolenoidController(5, 0, 1);
 		shifter->addSolenoid(5,2,3);
+		servi = new Servo(0);
 
 		motors_left = new MotorController(1);
 		motors_left->addMotor(2);
@@ -46,6 +51,16 @@ public:
 
 		compressor = new Compressor(5);
 		compressor->SetClosedLoopControl(true);
+
+		talon = new CANTalon(1);
+		talon->SetSafetyEnabled(false);
+		talon->Enable();
+		talon->SetControlMode(CANTalon::ControlMode::kPosition);
+
+		talon->SetEncPosition(0);
+		talon->SetSensorDirection(true);
+
+		talon->SetPID(2, 0, 0);
 	}
 
 	float deadband(float f)
@@ -198,6 +213,7 @@ public:
 				}
 				std->setcontrol(forward, rot);
 			}
+
 			Wait(0.03);
 		}
 	}
