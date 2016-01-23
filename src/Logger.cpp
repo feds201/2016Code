@@ -7,22 +7,30 @@
 
 #include <Logger.h>
 #include <time.h>
+#include <wpilib.h>
+
+Logger *Logger::singlton = 0;
 
 Logger::Logger() {
 	char timeString[64];
-	strftime(timeString, sizeof(timeString), "%g%m%e_%H%M", 0);
+	time_t rawTime;
+	struct tm * timeInfo;
 
-	logFile.open("/users/lvuser/logFile." + (std::string)timeString + ".txt");
-	csvFile.open("/users/lvuser/logFile." + (std::string)timeString + ".csv");
+	time(&rawTime);
+	timeInfo = localtime (&rawTime);
+	strftime(timeString, sizeof(timeString), "%g%m%e_%H%M", timeInfo);
+
+	logFile.open("/home/lvuser/logFile" + (std::string)timeString + ".txt");
+	csvFile.open("/home/lvuser/logFile" + (std::string)timeString + ".csv");
 }
 
-void Logger::logInfo(char *msg)
+void Logger::logInfo(const char *msg)
 {
 	logFile << "[INFO] " << msg << std::endl;
 	save();
 }
 
-void Logger::logError(char *msg)
+void Logger::logError(const char *msg)
 {
 	logFile << "!!! [ERROR] " << msg << std::endl;
 	std::cerr << "!!! [ERROR] " << msg << std::endl;
@@ -31,7 +39,8 @@ void Logger::logError(char *msg)
 
 void Logger::logCSV(struct CSV *data)
 {
-	csvFile << data->totalCurrent << ','
+	csvFile	<< data->voltage << ','
+			<< data->totalCurrent << ','
 			<< data->motorCurrent << std::endl;
 	save();
 }

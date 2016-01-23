@@ -14,22 +14,23 @@
 class Logger {
 public:
 	struct CSV {
-		float totalCurrent;
-		float motorCurrent;
+		double voltage;
+		double totalCurrent;
+		double motorCurrent;
 	};
 
 	virtual ~Logger();
 
-	void logError(char *msg);
-	void logInfo(char *msg);
+	void logError(const char *msg);
+	void logInfo(const char *msg);
 
 	void logCSV(struct CSV *data);
 
     static Logger *instance()
     {
-        if (!s_instance)
-          s_instance = new Logger();
-        return s_instance;
+        if (!singlton)
+        	singlton = new Logger();
+        return singlton;
     }
 private:
     std::ofstream logFile;
@@ -38,7 +39,7 @@ private:
     void save();
 
 	Logger();
-	static Logger *s_instance;
+	static Logger *singlton;
 };
 
 #endif /* SRC_LOGGER_H_ */

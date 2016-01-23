@@ -10,6 +10,7 @@
 
 #include "MotorController.h"
 #include "SolenoidControllers.h"
+#include "EdgeDetection.h"
 
 class ShiftTankDrive {
 public:
@@ -28,6 +29,9 @@ private:
 	MotorController *motors_left;
 	MotorController *motors_right;
 	DoubleSolenoidController *solenoids;
+
+	int numShifts = 0;
+	EdgeDetection shiftEdge;
 
 	int gear=0;
 	float percent=1.0f;

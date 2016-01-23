@@ -6,13 +6,16 @@
  */
 
 #include "ShiftTankDrive.h"
-#include "cmath"
+#include <cmath>
 #include <iostream>
+#include <string>
+#include "Logger.h"
 
 ShiftTankDrive::ShiftTankDrive(MotorController *motors_left, MotorController *motors_right, DoubleSolenoidController *solenoids)
 :motors_left(motors_left),
  motors_right(motors_right),
- solenoids(solenoids)
+ solenoids(solenoids),
+ shiftEdge(false)
 {
 	motors_left->setControlMode(CANTalon::ControlMode::kPercentVbus);
 
@@ -40,6 +43,15 @@ void ShiftTankDrive::setcontrol(float forward, float turn)
 		l /= m;
 		r /= m;
 	}
+
+	shiftEdge.update(gear==1);
+	if(shiftEdge.isEdge())
+	{
+		numShifts++;
+		std::string msg = "shift number " + numShifts;
+		Logger::instance()->logInfo(msg.c_str());
+	}
+	Logger::instance()->logInfo("test");
 
 	switch(gear)
 	{

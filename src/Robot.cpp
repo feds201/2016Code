@@ -21,6 +21,8 @@ class Robot: public SampleRobot
 	Joystick controller_driver;
 	Joystick controller_operator;
 
+	PowerDistributionPanel pdp;
+
 	MotorController *motors_left;
 	MotorController *motors_right;
 
@@ -61,6 +63,8 @@ public:
 		talon->SetSensorDirection(true);
 
 		talon->SetPID(2, 0, 0);
+
+		Logger::instance()->logInfo("Init complete");
 	}
 
 	float deadband(float f)
@@ -213,6 +217,13 @@ public:
 				}
 				std->setcontrol(forward, rot);
 			}
+
+			//Logging
+			//struct Logger::CSV csvData = {
+			//	pdp.GetVoltage(),
+			//	pdp.GetTotalCurrent(),
+			//	pdp.GetCurrent(12) + pdp.GetCurrent(13) + pdp.GetCurrent(14) + pdp.GetCurrent(15)
+			//};
 
 			Wait(0.03);
 		}
