@@ -22,27 +22,21 @@ class Robot: public SampleRobot
 	Joystick controller_operator;
 
 	PowerDistributionPanel pdp;
+	Compressor compressor;
 
 	MotorController *motors_left;
 	MotorController *motors_right;
-
 	DoubleSolenoidController *shifter;
-	Servo *servi;
-
 	ShiftTankDrive *std;
-
-	Compressor *compressor;
-
-	CANTalon *talon;
 
 public:
 	Robot() :
 			controller_driver(5),
-			controller_operator(1)
+			controller_operator(1),
+			compressor(5)
 	{
 		shifter = new DoubleSolenoidController(5, 0, 1);
 		shifter->addSolenoid(5,2,3);
-		servi = new Servo(0);
 
 		motors_left = new MotorController(1);
 		motors_left->addMotor(2);
@@ -51,18 +45,7 @@ public:
 
 		std = new ShiftTankDrive(motors_left, motors_right, shifter);
 
-		compressor = new Compressor(5);
-		compressor->SetClosedLoopControl(true);
-
-		talon = new CANTalon(1);
-		talon->SetSafetyEnabled(false);
-		talon->Enable();
-		talon->SetControlMode(CANTalon::ControlMode::kPosition);
-
-		talon->SetEncPosition(0);
-		talon->SetSensorDirection(true);
-
-		talon->SetPID(2, 0, 0);
+		compressor.SetClosedLoopControl(true);
 
 		Logger::instance()->logInfo("Init complete");
 	}
@@ -91,19 +74,9 @@ public:
 		EdgeDetection btn_X(false);
 		EdgeDetection btn_Y(false);
 
-		float percent=.5;
+		float percent=1.0f;
 
-
-		int timerUp = 0;
-		int timerDown = 0;
-		int currGear = 0;
-		float su = 0.60;
-		float sl = 0.40;
-		float alpha = 1.65;
-
-		float phi = (alpha - su)/(alpha*(1 - su));
-		float gamma = (su - su*alpha)/(alpha*(1 - su));
-		bool is_auto = false;
+		int gear=0;
 
 		while (IsOperatorControl() && IsEnabled())
 		{
@@ -125,105 +98,29 @@ public:
 
 				std->setPercent(percent);
 			}
-			if(btn_Y.isRising())
+			if(btn_A.isRising())
 			{
-				is_auto = !is_auto;
-				timerDown = 0;
-				timerUp = 0;
+				if(gear==0)
+					gear=1;
+				else
+					gear=0;
 			}
 
 			float forward = deadband(-controller_driver.GetRawAxis(1));
-			float rot = deadband(-controller_driver.GetRawAxis(4))*.7;
-			if(is_auto)
-			{
-				if(currGear == 0)
-				{
-					if(fabs(forward) >= su)
-					{
-						timerDown = 0;
-						timerUp++;
-						if(timerUp >= 0)
-						{
-							std->setGear(1);
-							currGear = 1;
-							timerUp = 0;
-						}
-					}
-					else
-					{
-						timerUp = 0;
-						timerDown = 0;
-					}
-				}
-				else
-				{
-					if(fabs(forward) <= sl)
-					{
-						timerUp = 0;
-						timerDown++;
-						if(timerDown >= 0)
-						{
-							std->setGear(0);
-							currGear = 0;
-							timerDown = 0;
-						}
-					}
-					else
-					{
-						timerDown = 0;
-						timerUp = 0;
-					}
-				}
-				if(currGear == 0)
-				{
-					std->setcontrol(forward,rot);
-				}
-				if(currGear == 1)
-				{
-					if(fabs(forward) <= su)
-					{
-						forward /= alpha;
-					}
-					else
-					{
-						if(forward >= 0)
-						{
-							forward *= phi;
-							forward += gamma;
-						}
-						else
-						{
-							forward *= phi;
-							forward -= gamma;
-						}
-					}
-					std->setcontrol(forward,rot);
-				}
-			}
-			else
-			{
-				if(btn_A.isRising())
-				{
-					if(currGear == 1)
-					{
-						std->setGear(0);
-						currGear = 0;
-					}
-					else if(currGear == 0)
-					{
-						std->setGear(1);
-						currGear = 1;
-					}
-				}
-				std->setcontrol(forward, rot);
-			}
+			float rot = deadband(-controller_driver.GetRawAxis(4));
+
+			forward *= forward;
+			rot *= rot;
+
+			std->setControl(forward, rot, gear);
 
 			//Logging
-			//struct Logger::CSV csvData = {
-			//	pdp.GetVoltage(),
-			//	pdp.GetTotalCurrent(),
-			//	pdp.GetCurrent(12) + pdp.GetCurrent(13) + pdp.GetCurrent(14) + pdp.GetCurrent(15)
-			//};
+			struct Logger::CSV csvData = {
+				pdp.GetVoltage(),
+				pdp.GetTotalCurrent(),
+				pdp.GetCurrent(12) + pdp.GetCurrent(13) + pdp.GetCurrent(14) + pdp.GetCurrent(15)
+			};
+			Logger::instance()->logCSV(&csvData);
 
 			Wait(0.03);
 		}

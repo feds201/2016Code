@@ -17,9 +17,7 @@ public:
 	ShiftTankDrive(MotorController *motors_left, MotorController *motors_right, DoubleSolenoidController *solenoids);
 	virtual ~ShiftTankDrive();
 
-	void setcontrol(float forward, float turn);
-
-	void setGear(int);
+	void setControl(float forward, float turn, int gear);
 	void setPercent(float p);
 
 	void enable();
@@ -33,7 +31,6 @@ private:
 	int numShifts = 0;
 	EdgeDetection shiftEdge;
 
-	int gear=0;
 	float percent=1.0f;
 };
 

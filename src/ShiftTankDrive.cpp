@@ -31,7 +31,7 @@ ShiftTankDrive::~ShiftTankDrive()
 	delete motors_left;
 }
 
-void ShiftTankDrive::setcontrol(float forward, float turn)
+void ShiftTankDrive::setControl(float forward, float turn, int gear)
 {
 
 	float l = forward - turn;
@@ -48,10 +48,10 @@ void ShiftTankDrive::setcontrol(float forward, float turn)
 	if(shiftEdge.isEdge())
 	{
 		numShifts++;
-		std::string msg = "shift number " + numShifts;
-		Logger::instance()->logInfo(msg.c_str());
+		char msg[64];
+		snprintf(msg, sizeof(msg), "shift number: %i", numShifts);
+		Logger::instance()->logInfo(msg);
 	}
-	Logger::instance()->logInfo("test");
 
 	switch(gear)
 	{
@@ -79,13 +79,6 @@ void ShiftTankDrive::disable()
 {
 	motors_left->disable();
 	motors_right->disable();
-}
-
-void ShiftTankDrive::setGear(int gear)
-{
-	this->gear = gear;
-
-	std::cout << "[INFO] Setting ShiftTankDrive gear to: " << this->gear << std::endl;
 }
 
 void ShiftTankDrive::setPercent(float p)
