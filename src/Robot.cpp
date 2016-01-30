@@ -45,7 +45,7 @@ public:
 
 		std = new ShiftTankDrive(motors_left, motors_right, shifter);
 
-		compressor.SetClosedLoopControl(true);
+		// compressor.SetClosedLoopControl(true);
 
 		Logger::instance()->logInfo("Init complete");
 	}
@@ -109,19 +109,28 @@ public:
 			float forward = deadband(-controller_driver.GetRawAxis(1));
 			float rot = deadband(-controller_driver.GetRawAxis(4));
 
-			forward *= forward;
-			rot *= rot;
+			forward *= fabs(forward);
+			rot *= fabs(rot);
 
-			std->setControl(forward, rot, gear);
+			struct Logger::CSV csvData;
+
+			std->setControl(forward, rot, gear,
+					&(csvData.driveValues[0]),
+					&(csvData.driveValues[1]),
+					&(csvData.driveValues[2]),
+					&(csvData.driveValues[3]));
 
 			//Logging
-			struct Logger::CSV csvData = {
-				pdp.GetVoltage(),
-				pdp.GetTotalCurrent(),
-				pdp.GetCurrent(12) + pdp.GetCurrent(13) + pdp.GetCurrent(14) + pdp.GetCurrent(15)
-			};
-			Logger::instance()->logCSV(&csvData);
+			csvData.voltage = pdp.GetVoltage();
+			csvData.totalCurrent = pdp.GetTotalCurrent();
+			csvData.driveCurrents[0] = pdp.GetCurrent(12);
+			csvData.driveCurrents[1] = pdp.GetCurrent(13);
+			csvData.driveCurrents[2] = pdp.GetCurrent(14);
+			csvData.driveCurrents[3] = pdp.GetCurrent(15);
+			csvData.psi = -1;
+			csvData.gear = gear;
 
+			Logger::instance()->logCSV(&csvData);
 			Wait(0.03);
 		}
 	}

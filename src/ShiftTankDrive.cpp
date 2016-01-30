@@ -31,7 +31,11 @@ ShiftTankDrive::~ShiftTankDrive()
 	delete motors_left;
 }
 
-void ShiftTankDrive::setControl(float forward, float turn, int gear)
+void ShiftTankDrive::setControl(float forward, float turn, int gear,
+		double *motorValOne,
+		double *motorValTwo,
+		double *motorValThree,
+		double *motorValFour)
 {
 
 	float l = forward - turn;
@@ -65,8 +69,20 @@ void ShiftTankDrive::setControl(float forward, float turn, int gear)
 		break;
 	}
 
-	motors_left->set(-l*percent);//because the motors are rotated 180deg
-	motors_right->set(r*percent);
+	l = -l*percent;
+	r = r*percent;
+
+	motors_left->set(l);//because the motors are rotated 180deg
+	motors_right->set(r);
+
+	if(motorValOne)
+		*motorValOne=l;
+	if(motorValTwo)
+		*motorValTwo=l;
+	if(motorValThree)
+		*motorValThree=r;
+	if(motorValFour)
+		*motorValFour=r;
 }
 
 void ShiftTankDrive::enable()

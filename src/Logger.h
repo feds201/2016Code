@@ -10,13 +10,17 @@
 
 #include <iostream>
 #include <fstream>
+#include <time.h>
 
 class Logger {
 public:
 	struct CSV {
 		double voltage;
 		double totalCurrent;
-		double motorCurrent;
+		double driveValues[4];
+		double driveCurrents[4];
+		double psi;
+		double gear;
 	};
 
 	virtual ~Logger();
@@ -33,6 +37,9 @@ public:
         return singlton;
     }
 private:
+
+    struct timeval startTime;
+
     std::ofstream logFile;
     std::ofstream csvFile;
 
