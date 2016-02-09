@@ -32,6 +32,9 @@ private:
 	MotorController *motors_right;
 	DoubleSolenoidController *solenoids;
 
+	int lastGear = 0;
+	int shiftIterator = 0;
+
 	int numShifts = 0;
 	EdgeDetection shiftEdge;
 

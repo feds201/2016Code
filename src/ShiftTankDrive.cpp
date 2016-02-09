@@ -57,17 +57,30 @@ void ShiftTankDrive::setControl(float forward, float turn, int gear,
 		Logger::instance()->logInfo(msg);
 	}
 
-	switch(gear)
+
+	if(gear != lastGear)
 	{
-	case 0:
-		solenoids->set(DoubleSolenoid::Value::kReverse);
-		break;
-	case 1:
-		solenoids->set(DoubleSolenoid::Value::kForward);
-		break;
-	default:
-		break;
+		switch(gear)
+		{
+		case 0:
+			solenoids->set(DoubleSolenoid::Value::kReverse);
+			break;
+		case 1:
+			solenoids->set(DoubleSolenoid::Value::kForward);
+			break;
+		case 2: solenoids->set(DoubleSolenoid::Value::kOff);
+			break;
+		default:
+			break;
+		}
+		shiftIterator = 0;
+		lastGear = gear;
+	} else if(shiftIterator < 20) {
+		shiftIterator++;
+		if(shiftIterator == 20)
+			solenoids->set(DoubleSolenoid::Value::kOff);
 	}
+
 
 	l = -l*percent;
 	r = r*percent;
