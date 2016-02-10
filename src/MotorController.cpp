@@ -1,12 +1,13 @@
 #include "MotorController.h"
 
-MotorController::MotorController(uint8_t canid)
+MotorController::MotorController(uint8_t canid, bool reverse)
 {
 	list = new struct mclist;
 	list->motor = new CANTalon(canid);
+	list->reversed = reverse;
 }
 
-void MotorController::addMotor(uint8_t canid)
+void MotorController::addMotor(uint8_t canid, bool reverse)
 {
 	struct mclist *l=list;
 	while(l->next)
@@ -18,6 +19,7 @@ void MotorController::addMotor(uint8_t canid)
 	l=l->next;
 
 	l->motor = new CANTalon(canid);
+	l->reversed = reverse;
 	l->canid = canid;
 }
 
@@ -44,11 +46,22 @@ void MotorController::removeMotor(uint8_t canid)
 void MotorController::set(float value)
 {
 	struct mclist *l=list;
-	l->motor->Set(value);
+	l->motor->Set(l->reversed ? -value : value);
 	while(l->next)
 	{
 		l = l->next;
-		l->motor->Set(value);
+		l->motor->Set(l->reversed ? -value : value);
+	}
+}
+
+void MotorController::runFunctionOnAll(void (*func)(CANTalon *))
+{
+	struct mclist *l=list;
+	func(l->motor);
+	while(l->next)
+	{
+		l = l->next;
+		func(l->motor);
 	}
 }
 

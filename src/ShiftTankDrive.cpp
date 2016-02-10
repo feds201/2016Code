@@ -82,7 +82,7 @@ void ShiftTankDrive::setControl(float forward, float turn, int gear,
 	}
 
 
-	l = -l*percent;
+	l = l*percent;
 	r = r*percent;
 
 	motors_left->set(l);//because the motors are rotated 180deg

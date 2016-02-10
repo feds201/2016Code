@@ -24,11 +24,8 @@ class Robot: public SampleRobot
 
 	PowerDistributionPanel pdp;
 	Compressor compressor;
-
-	MotorController *motors_left;
-	MotorController *motors_right;
-	DoubleSolenoidController *shifter;
 	ShiftTankDrive *std;
+	Shooter *shooter;
 
 public:
 	Robot() :
@@ -36,15 +33,24 @@ public:
 			controller_operator(1),
 			compressor(5)
 	{
+		MotorController *motors_left;
+		MotorController *motors_right;
+		DoubleSolenoidController *shifter;
+
+		MotorController *motors_shooter;
+
 		shifter = new DoubleSolenoidController(5, 0, 1);
 		shifter->addSolenoid(5,2,3);
 
-		motors_left = new MotorController(1);
-		motors_left->addMotor(2);
-		motors_right = new MotorController(3);
-		motors_right->addMotor(4);
+		motors_left = new MotorController(1, false);
+		motors_left->addMotor(2, false);
+		motors_right = new MotorController(3, true);
+		motors_right->addMotor(4, true);
+		motors_shooter = new MotorController(5, false);
+		motors_shooter->addMotor(6, true);
 
 		std = new ShiftTankDrive(motors_left, motors_right, shifter);
+		shooter = new Shooter(motors_shooter, new Solenoid(4));
 
 		// compressor.SetClosedLoopControl(true);
 
@@ -84,6 +90,9 @@ public:
 			btn_A.update(controller_driver.GetRawButton(1));
 			btn_B.update(controller_driver.GetRawButton(2));
 			btn_X.update(controller_driver.GetRawButton(3));
+			btn_Y.update(controller_driver.GetRawButton(4));
+
+			shooter->update();
 
 			if(btn_B.isRising())
 			{
@@ -106,6 +115,14 @@ public:
 				else
 					gear=0;
 			}
+			if(btn_Y.isRising())
+			{
+				shooter->shoot();
+			}
+
+			SmartDashboard::PutNumber("Total Amps:", pdp.GetTotalCurrent());
+			SmartDashboard::PutNumber("Gear:", gear+1);
+
 
 			float forward = deadband(-controller_driver.GetRawAxis(1));
 			float rot = deadband(-controller_driver.GetRawAxis(4));
@@ -120,6 +137,9 @@ public:
 					&(csvData.driveValues[1]),
 					&(csvData.driveValues[2]),
 					&(csvData.driveValues[3]));
+
+
+			shooter->set(controller_driver.GetRawAxis(3)*10000.0f);
 
 			//Logging
 			csvData.voltage = pdp.GetVoltage();
