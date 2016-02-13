@@ -5,6 +5,7 @@
 #include "ShiftTankDrive.h"
 #include "EdgeDetection.h"
 #include "Logger.h"
+#include "Shooter.h"
 
 /**
  * This is a demo program showing the use of the RobotDrive class.
@@ -27,14 +28,17 @@ class Robot: public SampleRobot
 	ShiftTankDrive *std;
 	Shooter *shooter;
 
+
 public:
 	Robot() :
 			controller_driver(5),
 			controller_operator(1),
 			compressor(5)
+
 	{
 		MotorController *motors_left;
 		MotorController *motors_right;
+
 		DoubleSolenoidController *shifter;
 
 		MotorController *motors_shooter;
@@ -48,6 +52,7 @@ public:
 		motors_right->addMotor(4, true);
 		motors_shooter = new MotorController(5, false);
 		motors_shooter->addMotor(6, true);
+
 
 		std = new ShiftTankDrive(motors_left, motors_right, shifter);
 		shooter = new Shooter(motors_shooter, new Solenoid(4));
@@ -120,19 +125,23 @@ public:
 				shooter->shoot();
 			}
 
+
+
 			SmartDashboard::PutNumber("Total Amps:", pdp.GetTotalCurrent());
 			SmartDashboard::PutNumber("Gear:", gear+1);
 
 
 			float forward = deadband(-controller_driver.GetRawAxis(1));
 			float rot = deadband(-controller_driver.GetRawAxis(4));
+			float R_Trigger = (-controller_driver.GetRawAxis(2));
+
 
 			forward *= fabs(forward);
 			rot *= fabs(rot);
 
 			struct Logger::CSV csvData;
 
-			std->setControl(forward, rot, gear,
+			std->setControl(forward, rot, gear, R_Trigger,
 					&(csvData.driveValues[0]),
 					&(csvData.driveValues[1]),
 					&(csvData.driveValues[2]),

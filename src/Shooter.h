@@ -12,6 +12,7 @@
 #include "WPILIB.h"
 
 class Shooter {
+
 	MotorController *shooterMotorList;
 	Solenoid *solenoidTrigger;
 	int countdown=0;

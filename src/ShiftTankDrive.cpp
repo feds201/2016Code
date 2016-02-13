@@ -16,6 +16,7 @@ ShiftTankDrive::ShiftTankDrive(MotorController *motors_left, MotorController *mo
  motors_right(motors_right),
  solenoids(solenoids),
  shiftEdge(false)
+
 {
 	motors_left->setControlMode(CANTalon::ControlMode::kPercentVbus);
 
@@ -31,7 +32,7 @@ ShiftTankDrive::~ShiftTankDrive()
 	delete motors_left;
 }
 
-void ShiftTankDrive::setControl(float forward, float turn, int gear,
+void ShiftTankDrive::setControl(float forward, float turn, int gear, float trigger,
 		double *motorValOne,
 		double *motorValTwo,
 		double *motorValThree,
@@ -87,6 +88,8 @@ void ShiftTankDrive::setControl(float forward, float turn, int gear,
 
 	motors_left->set(l);//because the motors are rotated 180deg
 	motors_right->set(r);
+
+
 
 	if(motorValOne)
 		*motorValOne=l;

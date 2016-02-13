@@ -99,3 +99,45 @@ void MotorController::disable()
 		l->motor->Disable();
 	}
 }
+
+SparkMotorController::SparkMotorController(uint32_t channel, bool inverted){
+	sparkList->inverted = inverted;
+	sparkList = new struct mclist;
+	sparkList->sparkMotor = new Spark(channel);
+	sparkList->sparkMotor->SetInverted(inverted);
+}
+void SparkMotorController::addSpark(uint32_t channel, bool inverted){
+
+	struct mclist *l=sparkList;
+		while(l->next)
+			l = l->next;
+		l->inverted = inverted;
+		l->next = new struct mclist;
+		l->next->prev = l;
+		l=l->next;
+		l->sparkMotor = new Spark(channel);
+		l->sparkMotor->SetInverted(inverted);
+
+
+}
+void SparkMotorController::setSpark(float value, uint8_t syncGroup){
+
+	struct mclist *l=sparkList;
+		l->sparkMotor->Set(value, syncGroup);
+		while(l->next)
+		{
+			l = l->next;
+			l->sparkMotor->Set(value, syncGroup);
+		}
+}
+
+void SparkMotorController::stopSpark()
+{
+	struct mclist *l=sparkList;
+	l->sparkMotor->StopMotor();
+	while(l->next)
+	{
+		l = l->next;
+		l->sparkMotor->StopMotor();
+	}
+}

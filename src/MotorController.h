@@ -29,4 +29,25 @@ private:
 	struct mclist *list;
 };
 
+class SparkMotorController {
+public:
+	SparkMotorController(uint32_t channel, bool inverted);
+	void addSpark(uint32_t channel, bool inverted);
+	void stopSpark();
+	void setSpark(float value, uint8_t syncGroup);
+private:
+	struct mclist {
+		Spark *sparkMotor;
+		bool inverted;
+		float value;
+		uint32_t channel;
+		uint8_t syncGroup;
+
+		struct mclist *next = 0;
+		struct mclist *prev = 0;
+	};
+	struct mclist *sparkList;
+
+};
+
 #endif //MOTORCONTROLLER_H

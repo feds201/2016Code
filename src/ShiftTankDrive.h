@@ -17,7 +17,7 @@ public:
 	ShiftTankDrive(MotorController *motors_left, MotorController *motors_right, DoubleSolenoidController *solenoids);
 	virtual ~ShiftTankDrive();
 
-	void setControl(float forward, float turn, int gear,
+	void setControl(float forward, float turn, int gear, float trigger,
 			double *motorValOne,
 			double *motorValTwo,
 			double *motorValThree,
@@ -31,6 +31,9 @@ private:
 	MotorController *motors_left;
 	MotorController *motors_right;
 	DoubleSolenoidController *solenoids;
+
+
+
 
 	int lastGear = 0;
 	int shiftIterator = 0;
