@@ -8,21 +8,32 @@
 #ifndef SRC_SHOOTER_H_
 #define SRC_SHOOTER_H_
 
-#include "MotorController.h"
+#include "MotorControllers.h"
 #include "WPILIB.h"
 
 class Shooter {
+	SRXMotorController *shooterMotorList;
+	DoubleSolenoid *solenoidTrigger;
 
-	MotorController *shooterMotorList;
-	Solenoid *solenoidTrigger;
 	int countdown=0;
+	float rpm=7.15;
+
+	bool cylinderUp = false;
 
 public:
-	Shooter(MotorController *shooterMotors, Solenoid *trigger);
-	void set(int rpm);
+	struct ShooterLogVals {
+		int RPMSActual;
+		int RPMSetpoint;
+		bool cylinderUp;
+	};
+
+	Shooter(SRXMotorController *shooterMotors, DoubleSolenoid *trigger);
 	void shoot();
 
-	void update();
+	float modifyRPM(float delta);
+	float setRPM(float rpm);
+
+	struct Shooter::ShooterLogVals update(bool logThisTime);
 };
 
 #endif /* SRC_SHOOTER_H_ */

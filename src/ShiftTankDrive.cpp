@@ -11,7 +11,7 @@
 #include <string>
 #include "Logger.h"
 
-ShiftTankDrive::ShiftTankDrive(MotorController *motors_left, MotorController *motors_right, DoubleSolenoidController *solenoids)
+ShiftTankDrive::ShiftTankDrive(SRXMotorController *motors_left, SRXMotorController *motors_right, DoubleSolenoidController *solenoids)
 :motors_left(motors_left),
  motors_right(motors_right),
  solenoids(solenoids),
@@ -32,11 +32,7 @@ ShiftTankDrive::~ShiftTankDrive()
 	delete motors_left;
 }
 
-void ShiftTankDrive::setControl(float forward, float turn, int gear, float trigger,
-		double *motorValOne,
-		double *motorValTwo,
-		double *motorValThree,
-		double *motorValFour)
+struct ShiftTankDrive::STDLogVals ShiftTankDrive::update(float forward, float turn, int gear, bool logThisTime)
 {
 
 	float l = forward - turn;
@@ -76,9 +72,9 @@ void ShiftTankDrive::setControl(float forward, float turn, int gear, float trigg
 		}
 		shiftIterator = 0;
 		lastGear = gear;
-	} else if(shiftIterator < 20) {
+	} else if(shiftIterator < 200) {
 		shiftIterator++;
-		if(shiftIterator == 20)
+		if(shiftIterator == 200)
 			solenoids->set(DoubleSolenoid::Value::kOff);
 	}
 
@@ -90,15 +86,15 @@ void ShiftTankDrive::setControl(float forward, float turn, int gear, float trigg
 	motors_right->set(r);
 
 
-
-	if(motorValOne)
-		*motorValOne=l;
-	if(motorValTwo)
-		*motorValTwo=l;
-	if(motorValThree)
-		*motorValThree=r;
-	if(motorValFour)
-		*motorValFour=r;
+	struct STDLogVals ret;
+	if(logThisTime)
+	{
+		ret.values[0]=l;
+		ret.values[1]=l;
+		ret.values[2]=r;
+		ret.values[3]=r;
+	}
+	return ret;
 }
 
 void ShiftTankDrive::enable()
@@ -117,5 +113,5 @@ void ShiftTankDrive::setPercent(float p)
 {
 	percent = p > 1.0f ? 1.0f : (p < -1.0f ? -1.0f : p);
 
-	std::cout << "[INFO] Setting ShiftTankDrive percent to: " << percent << std::endl;
+	Logger::instance()->logInfo("SDT Percent set to %f", percent);
 }

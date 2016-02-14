@@ -1,7 +1,6 @@
 #include "WPILib.h"
-
+#include "MotorControllers.h"
 #include "SolenoidControllers.h"
-#include "MotorController.h"
 #include "ShiftTankDrive.h"
 #include "EdgeDetection.h"
 #include "Logger.h"
@@ -28,6 +27,7 @@ class Robot: public SampleRobot
 	ShiftTankDrive *std;
 	Shooter *shooter;
 
+	int logTicker=0;
 
 public:
 	Robot() :
@@ -36,29 +36,21 @@ public:
 			compressor(5)
 
 	{
-		MotorController *motors_left;
-		MotorController *motors_right;
-
-		DoubleSolenoidController *shifter;
-
-		MotorController *motors_shooter;
-
-		shifter = new DoubleSolenoidController(5, 0, 1);
-		shifter->addSolenoid(5,2,3);
-
-		motors_left = new MotorController(1, false);
-		motors_left->addMotor(2, false);
-		motors_right = new MotorController(3, true);
-		motors_right->addMotor(4, true);
-		motors_shooter = new MotorController(5, false);
-		motors_shooter->addMotor(6, true);
-
-
+		//SHIFT DRIVE TRAIN
+		SRXMotorController *motors_left = new SRXMotorController(3, true);
+		motors_left->addMotor(4, true);
+		SRXMotorController *motors_right = new SRXMotorController(1, false);
+		motors_right->addMotor(2, false);
+		DoubleSolenoidController *shifter = new DoubleSolenoidController(10, 0, 1);
 		std = new ShiftTankDrive(motors_left, motors_right, shifter);
-		shooter = new Shooter(motors_shooter, new Solenoid(4));
 
-		// compressor.SetClosedLoopControl(true);
+		//SHOOTER
+		SRXMotorController *motors_shooter = new SRXMotorController(5, true);
+		motors_shooter->addMotor(6, false);
+		DoubleSolenoid *trigger = new DoubleSolenoid(10, 2, 3);
+		shooter = new Shooter(motors_shooter, trigger);
 
+		//LOGGER
 		Logger::instance()->logInfo("Init complete");
 	}
 
@@ -85,83 +77,89 @@ public:
 		EdgeDetection btn_B(false);
 		EdgeDetection btn_X(false);
 		EdgeDetection btn_Y(false);
+		EdgeDetection btn_Back(false);
+		EdgeDetection btn_Start(false);
 
-		float percent=1.0f;
+		bool reverseMode = false;
 
 		int gear=0;
 
 		while (IsOperatorControl() && IsEnabled())
 		{
+			bool logThisTime = false;
+			logTicker++;
+			if(logTicker == 20)
+			{
+				logTicker = 0;
+				logThisTime = true;
+			}
+
 			btn_A.update(controller_driver.GetRawButton(1));
 			btn_B.update(controller_driver.GetRawButton(2));
 			btn_X.update(controller_driver.GetRawButton(3));
 			btn_Y.update(controller_driver.GetRawButton(4));
 
-			shooter->update();
+			float forward = deadband(-controller_driver.GetRawAxis(1));
+			float rot = deadband(-controller_driver.GetRawAxis(4));
 
+			forward *= fabs(forward) * (reverseMode ? -1 : 1);
+			rot *= fabs(rot);
+
+			if(btn_A.isRising())
+			{
+				shooter->shoot();
+			}
 			if(btn_B.isRising())
 			{
-				percent += .05;
-				percent = percent > 1.0f ? 1.0f : (percent < 0.0f ? 0.0f : percent);
-
-				std->setPercent(percent);
+				reverseMode = !reverseMode;
 			}
 			if(btn_X.isRising())
 			{
-				percent -= .05;
-				percent = percent > 1.0f ? 1.0f : (percent < 0.0f ? 0.0f : percent);
-
-				std->setPercent(percent);
 			}
-			if(btn_A.isRising())
+			if(btn_Y.isRising())
 			{
 				if(gear==0)
 					gear=1;
 				else
 					gear=0;
 			}
-			if(btn_Y.isRising())
-			{
-				shooter->shoot();
-			}
+			if(btn_Back.isRising())
+				shooter->modifyRPM(-0.01);
+			if(btn_Start.isRising())
+				shooter->modifyRPM(+0.01);
 
-
-
-			SmartDashboard::PutNumber("Total Amps:", pdp.GetTotalCurrent());
-			SmartDashboard::PutNumber("Gear:", gear+1);
-
-
-			float forward = deadband(-controller_driver.GetRawAxis(1));
-			float rot = deadband(-controller_driver.GetRawAxis(4));
-			float R_Trigger = (-controller_driver.GetRawAxis(2));
-
-
-			forward *= fabs(forward);
-			rot *= fabs(rot);
-
-			struct Logger::CSV csvData;
-
-			std->setControl(forward, rot, gear, R_Trigger,
-					&(csvData.driveValues[0]),
-					&(csvData.driveValues[1]),
-					&(csvData.driveValues[2]),
-					&(csvData.driveValues[3]));
-
-
-			shooter->set(controller_driver.GetRawAxis(3)*10000.0f);
+			struct ShiftTankDrive::STDLogVals driveVals = std->update(forward, rot, gear, logThisTime);
+			struct Shooter::ShooterLogVals shooterVals = shooter->update(logThisTime);
 
 			//Logging
-			csvData.voltage = pdp.GetVoltage();
-			csvData.totalCurrent = pdp.GetTotalCurrent();
-			csvData.driveCurrents[0] = pdp.GetCurrent(12);
-			csvData.driveCurrents[1] = pdp.GetCurrent(13);
-			csvData.driveCurrents[2] = pdp.GetCurrent(14);
-			csvData.driveCurrents[3] = pdp.GetCurrent(15);
-			csvData.psi = -1;
-			csvData.gear = gear;
+			if(logThisTime)
+			{
+				logTicker = 0;
+				SmartDashboard::PutNumber("Total Amps:", pdp.GetTotalCurrent());
+				SmartDashboard::PutNumber("Gear:", gear+1);
 
-			Logger::instance()->logCSV(&csvData);
-			Wait(0.03);
+				struct Logger::CSV csvData;
+
+				csvData.driveSetpoints[0] = driveVals.values[0];
+				csvData.driveSetpoints[1] = driveVals.values[1];
+				csvData.driveSetpoints[2] = driveVals.values[2];
+				csvData.driveSetpoints[3] = driveVals.values[3];
+
+				csvData.voltage = pdp.GetVoltage();
+				csvData.totalCurrent = pdp.GetTotalCurrent();
+				csvData.driveCurrents[0] = pdp.GetCurrent(12);
+				csvData.driveCurrents[1] = pdp.GetCurrent(13);
+				csvData.driveCurrents[2] = pdp.GetCurrent(14);
+				csvData.driveCurrents[3] = pdp.GetCurrent(15);
+				csvData.shooterRPMActual = shooterVals.RPMSActual;
+				csvData.shooterRPMSetpoint = shooterVals.RPMSetpoint;
+				csvData.shooterCylinderUp = shooterVals.cylinderUp;
+				csvData.psi = -1;
+				csvData.gear = gear + 1;
+
+				Logger::instance()->logCSV(&csvData);
+			}
+			Wait(0.005);
 		}
 	}
 

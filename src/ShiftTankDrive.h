@@ -8,28 +8,28 @@
 #ifndef SRC_SHIFTTANKDRIVE_H_
 #define SRC_SHIFTTANKDRIVE_H_
 
-#include "MotorController.h"
+#include "MotorControllers.h"
 #include "SolenoidControllers.h"
 #include "EdgeDetection.h"
 
 class ShiftTankDrive {
 public:
-	ShiftTankDrive(MotorController *motors_left, MotorController *motors_right, DoubleSolenoidController *solenoids);
+	struct STDLogVals {
+		double values[4];
+	};
+
+	ShiftTankDrive(SRXMotorController *motors_left, SRXMotorController *motors_right, DoubleSolenoidController *solenoids);
 	virtual ~ShiftTankDrive();
 
-	void setControl(float forward, float turn, int gear, float trigger,
-			double *motorValOne,
-			double *motorValTwo,
-			double *motorValThree,
-			double *motorValFour);
+	struct ShiftTankDrive::STDLogVals update(float forward, float turn, int gear, bool logThisTime);
 	void setPercent(float p);
 
 	void enable();
 	void disable();
 
 private:
-	MotorController *motors_left;
-	MotorController *motors_right;
+	SRXMotorController *motors_left;
+	SRXMotorController *motors_right;
 	DoubleSolenoidController *solenoids;
 
 

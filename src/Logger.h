@@ -11,22 +11,26 @@
 #include <iostream>
 #include <fstream>
 #include <time.h>
+#include <stdarg.h>
 
 class Logger {
 public:
 	struct CSV {
 		double voltage;
 		double totalCurrent;
-		double driveValues[4];
+		double driveSetpoints[4];
 		double driveCurrents[4];
+		double shooterRPMActual;
+		double shooterRPMSetpoint;
+		bool shooterCylinderUp;
 		double psi;
 		double gear;
 	};
 
 	virtual ~Logger();
 
-	void logError(const char *msg);
-	void logInfo(const char *msg);
+	void logError(const char *msg, ... );
+	void logInfo(const char *msg, ... );
 
 	void logCSV(struct CSV *data);
 

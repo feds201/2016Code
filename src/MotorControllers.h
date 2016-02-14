@@ -1,12 +1,17 @@
-#ifndef MOTORCONTROLLER_H
-#define MOTORCONTROLLER_H
+#ifndef MOTORCONTROLLERS_H
+#define MOTORCONTROLLERS_H
 
 #include "CANTalon.h"
 #include "WPILib.h"
 
-class MotorController {
+class SRXMotorController {
 public:
-	MotorController(uint8_t canid, bool reverse);
+	struct EncoderInfo_Vel {
+		float avg;
+		float standardDiff;
+	};
+
+	SRXMotorController(uint8_t canid, bool reverse);
 	void addMotor(uint8_t canid, bool reverse);
 	void removeMotor(uint8_t canid);
 
@@ -14,6 +19,8 @@ public:
 	void enable();
 	void disable();
 	void setControlMode(CANTalon::ControlMode);
+	void syncEncoders();
+	struct SRXMotorController::EncoderInfo_Vel getEncoderInfo_Vel();
 	void runFunctionOnAll(void (*func)(CANTalon *motor));
 
 private:
@@ -50,4 +57,4 @@ private:
 
 };
 
-#endif //MOTORCONTROLLER_H
+#endif //MOTORCONTROLLERS_H

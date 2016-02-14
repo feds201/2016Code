@@ -6,40 +6,63 @@
  */
 
 #include <Shooter.h>
+#include "Logger.h"
 
 void initMotor(CANTalon *m)
 {
-	m->SetControlMode(CANTalon::ControlMode::kPercentVbus);
+	m->SetControlMode(CANTalon::ControlMode::kVoltage);
 	m->SetSafetyEnabled(false);
 	m->Enable();
 }
 
-Shooter::Shooter(MotorController *shooterMotors, Solenoid *trigger) :
+Shooter::Shooter(SRXMotorController *shooterMotors, DoubleSolenoid *trigger) :
 shooterMotorList(shooterMotors),
 solenoidTrigger(trigger)
 {
 	shooterMotorList->runFunctionOnAll(initMotor);
 }
 
-void Shooter::set(int rpm)
-{
-	float value = (float)rpm / 10000.0f;
-	shooterMotorList->set(value);
-}
-
 void Shooter::shoot()
 {
-	solenoidTrigger->Set(true);
+	this->cylinderUp = true;
+	solenoidTrigger->Set(DoubleSolenoid::Value::kForward);
 	countdown=100;
 }
 
-void Shooter::update()
+float Shooter::modifyRPM(float delta)
+{
+	rpm += delta;
+	Logger::instance()->logInfo("Shooter RPM set to %f", rpm);
+	return rpm;
+}
+
+float Shooter::setRPM(float rpm)
+{
+	this->rpm = rpm;
+	Logger::instance()->logInfo("Shooter RPM set to %f", rpm);
+	return rpm;
+}
+
+struct Shooter::ShooterLogVals Shooter::update(bool logThisTime)
 {
 	if(countdown != 0)
 	{
 		countdown--;
 		if(countdown == 0)
-			solenoidTrigger->Set(false);
+		{
+			this->cylinderUp = false;
+			solenoidTrigger->Set(DoubleSolenoid::Value::kReverse);
+		}
 	}
 
+	shooterMotorList->set(rpm);
+
+	struct ShooterLogVals ret;
+	if(logThisTime)
+	{
+		ret.RPMSActual = shooterMotorList->getEncoderInfo_Vel().avg;
+		ret.RPMSetpoint = rpm;
+		ret.cylinderUp = this->cylinderUp;
+	}
+	return ret;
 }
