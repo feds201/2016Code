@@ -5,6 +5,7 @@
 #include "EdgeDetection.h"
 #include "Logger.h"
 #include "Shooter.h"
+#include "INIReader.h"
 
 /**
  * This is a demo program showing the use of the RobotDrive class.
@@ -23,35 +24,64 @@ class Robot: public SampleRobot
 	Joystick controller_operator;
 
 	PowerDistributionPanel pdp;
-	Compressor compressor;
+	Compressor *compressor;
 	ShiftTankDrive *std;
 	Shooter *shooter;
 
+	//INI FILE
+	INIReader iniFile;
+
 	int logTicker=0;
+	int logInterval;
 
 public:
 	Robot() :
 			controller_driver(5),
 			controller_operator(1),
-			compressor(5)
-
+			iniFile("/config.ini")
 	{
 		//SHIFT DRIVE TRAIN
-		SRXMotorController *motors_left = new SRXMotorController(3, true);
-		motors_left->addMotor(4, true);
-		SRXMotorController *motors_right = new SRXMotorController(1, false);
-		motors_right->addMotor(2, false);
-		DoubleSolenoidController *shifter = new DoubleSolenoidController(10, 0, 1);
+		SRXMotorController *motors_left = new SRXMotorController(
+				iniFile.getInt("Drive", "leftPrimaryMotorID"),
+				iniFile.getBool("Drive", "leftPrimaryMotorReversed"));
+		motors_left->addMotor(
+				iniFile.getInt("Drive", "leftSecondaryMotorID"),
+				iniFile.getBool("Drive", "leftSecondaryMotorReversed"));
+		SRXMotorController *motors_right = new SRXMotorController(
+				iniFile.getInt("Drive", "rightPrimaryMotorID"),
+				iniFile.getBool("Drive", "rightPrimaryMotorReversed"));
+		motors_right->addMotor(
+				iniFile.getInt("Drive", "rightSecondarMotoryID"),
+				iniFile.getBool("Drive", "rightSecondaryMotorReversed"));
+		DoubleSolenoidController *shifter = new DoubleSolenoidController(
+				iniFile.getInt("Drive", "PCMID"),
+				iniFile.getInt("Drive", "shiftSolenoidChannelA"),
+				iniFile.getInt("Drive", "shiftSolenoidChannelB"));
 		std = new ShiftTankDrive(motors_left, motors_right, shifter);
 
 		//SHOOTER
-		SRXMotorController *motors_shooter = new SRXMotorController(5, true);
-		motors_shooter->addMotor(6, false);
-		DoubleSolenoid *trigger = new DoubleSolenoid(10, 2, 3);
+		SRXMotorController *motors_shooter = new SRXMotorController(
+				iniFile.getInt("Shooter", "leftMotorID"),
+				iniFile.getBool("Shooter", "leftMotorReversed"));
+		motors_shooter->addMotor(
+				iniFile.getInt("Shooter", "rightMotorID"),
+				iniFile.getBool("Shooter", "rightMotorReversed"));
+		DoubleSolenoid *trigger = new DoubleSolenoid(
+				iniFile.getInt("Shooter", "PCMID"),
+				iniFile.getInt("Shooter", "triggerSolenoidChannelA"),
+				iniFile.getInt("Shooter", "triggerSolenoidChannelB"));
 		shooter = new Shooter(motors_shooter, trigger);
 
+		compressor = new Compressor(iniFile.getInt("Pneumatics", "compressorPCMID"));
+
 		//LOGGER
+		logInterval = iniFile.getInt("Logger", "interval");
 		Logger::instance()->logInfo("Init complete");
+	}
+
+	void RobotInit()
+	{
+		SmartDashboard::PutString("Robot Name:", iniFile.get("Robot", "Name"));
 	}
 
 	float deadband(float f)
@@ -161,6 +191,11 @@ public:
 			}
 			Wait(0.005);
 		}
+	}
+
+	void Disabled()
+	{
+
 	}
 
 	void Test()
