@@ -7,51 +7,43 @@
 
 #include <Pickup.h>
 
-Pickup::Pickup(DoubleSolenoidController *solenoid, int timerMax, DigitalInput *sensorA, DigitalInput *sensorB) :
+Pickup::Pickup(DoubleSolenoidController *solenoid, double downTime, DigitalInput *sensorA, DigitalInput *sensorB) :
 sensorA(sensorA),
 sensorB(sensorB),
-timerMax(timerMax),
+downTime(downTime),
 solenoid(solenoid)
 {
 	solenoid->set(DoubleSolenoid::Value::kReverse);
-	countdown = timerMax;
+	countdown = 0;
 }
 
-void Pickup::update()
+struct Pickup::LogVals Pickup::update(double dt, bool logThisTime)
 {
 	if(countdown > 0)
 	{
-		countdown--;
-		if(countdown == 0)
-			solenoid->set(DoubleSolenoid::Value::kOff);
-	}
-	if(pickupOnce_timer > 0)
-	{
-		pickupOnce_timer--;
-		if(pickupOnce_timer == 0)
-		{
+		countdown -= dt;
+		if(countdown <= 0)
 			solenoid->set(DoubleSolenoid::Value::kReverse);
-			countdown = timerMax;
-		}
 	}
+	struct Pickup::LogVals ret;
+	ret.pickupIsUp = true;
+	return ret;
 }
 
 void Pickup::setUp()
 {
 	solenoid->set(DoubleSolenoid::Value::kReverse);
-	countdown = timerMax;
 }
 
 void Pickup::setDown()
 {
 	solenoid->set(DoubleSolenoid::Value::kForward);
-	countdown = timerMax;
 }
 
 void Pickup::pickupOnce()
 {
 	solenoid->set(DoubleSolenoid::Value::kForward);
-	pickupOnce_timer = timerMax;
+	countdown = downTime;
 }
 
 void Pickup::pickupOnceSensored()
@@ -59,7 +51,7 @@ void Pickup::pickupOnceSensored()
 	if(getSensorIsReady())
 	{
 		solenoid->set(DoubleSolenoid::Value::kForward);
-		pickupOnce_timer = timerMax;
+		countdown = downTime;
 	}
 }
 

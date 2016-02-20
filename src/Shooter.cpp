@@ -8,18 +8,15 @@
 #include <Shooter.h>
 #include "Logger.h"
 
-void initMotor(CANTalon *m)
-{
-	m->SetControlMode(CANTalon::ControlMode::kVoltage);
-	m->SetSafetyEnabled(false);
-	m->Enable();
-}
-
-Shooter::Shooter(SRXMotorController *shooterMotors, DoubleSolenoid *trigger) :
+Shooter::Shooter(SRXMotorController *shooterMotors, DoubleSolenoid *trigger, float rampRate, float boostTime, float boostAmnt) :
 shooterMotorList(shooterMotors),
-solenoidTrigger(trigger)
+solenoidTrigger(trigger),
+rampRate(rampRate),
+boostTime(boostTime),
+boostAmnt(boostAmnt)
 {
-	shooterMotorList->runFunctionOnAll(initMotor);
+	shooterMotorList->setControlMode(CANTalon::ControlMode::kVoltage);
+	shooterMotorList->enable();
 }
 
 void Shooter::shoot()
@@ -43,7 +40,7 @@ float Shooter::setRPM(float rpm)
 	return rpm;
 }
 
-struct Shooter::ShooterLogVals Shooter::update(bool logThisTime)
+struct Shooter::LogVals Shooter::update(double dt, bool logThisTime)
 {
 	if(countdown != 0)
 	{
@@ -55,14 +52,62 @@ struct Shooter::ShooterLogVals Shooter::update(bool logThisTime)
 		}
 	}
 
-	shooterMotorList->set(rpm);
+	if(running)
+	{
+		float setpoint = rpm;
+		float realRampRate = rampRate;
+		if(secsSinceStart < boostTime)
+		{
+			secsSinceStart += dt;
+			setpoint += boostAmnt;
+			realRampRate *= 20;
+		}
+		SmartDashboard::PutNumber("SSS:", secsSinceStart);
+		SmartDashboard::PutNumber("setpoint:", setpoint);
+		SmartDashboard::PutNumber("rv:", runningVoltage);
+		if(setpoint > runningVoltage)
+		{
+			runningVoltage += realRampRate*dt;
+			if(runningVoltage > setpoint)
+				runningVoltage = setpoint;
+		} else if(setpoint < runningVoltage)
+		{
+			runningVoltage -= realRampRate*dt;
+			if(runningVoltage < setpoint)
+				runningVoltage = setpoint;
+		}
+	} else {
+		if(runningVoltage > 0)
+		{
+			runningVoltage -= rampRate*dt;
+			if(runningVoltage < 0)
+				runningVoltage = 0;
+		}
+	}
 
-	struct ShooterLogVals ret;
+	shooterMotorList->enable();
+	shooterMotorList->set(runningVoltage);
+	struct LogVals ret;
 	if(logThisTime)
 	{
-		ret.RPMSActual = shooterMotorList->getEncoderInfo_Vel().avg;
 		ret.RPMSetpoint = rpm;
 		ret.cylinderUp = this->cylinderUp;
 	}
 	return ret;
+}
+
+
+
+void Shooter::start()
+{
+	running = true;
+}
+void Shooter::stop()
+{
+	running = false;
+}
+
+void Shooter::toggle()
+{
+	running = !running;
 }

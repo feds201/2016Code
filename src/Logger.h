@@ -23,6 +23,7 @@ public:
 		double shooterRPMActual;
 		double shooterRPMSetpoint;
 		bool shooterCylinderUp;
+		bool pickupIsUp;
 		double psi;
 		double gear;
 	};

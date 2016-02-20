@@ -6,6 +6,7 @@
 #include "Logger.h"
 #include "Shooter.h"
 #include "INIReader.h"
+#include "Pickup.h"
 
 /**
  * This is a demo program showing the use of the RobotDrive class.
@@ -27,6 +28,7 @@ class Robot: public SampleRobot
 	Compressor *compressor;
 	ShiftTankDrive *std;
 	Shooter *shooter;
+	Pickup *pickerUpper;
 
 	//INI FILE
 	INIReader iniFile;
@@ -51,7 +53,7 @@ public:
 				iniFile.getInt("Drive", "rightPrimaryMotorID"),
 				iniFile.getBool("Drive", "rightPrimaryMotorReversed"));
 		motors_right->addMotor(
-				iniFile.getInt("Drive", "rightSecondarMotoryID"),
+				iniFile.getInt("Drive", "rightSecondaryMotorID"),
 				iniFile.getBool("Drive", "rightSecondaryMotorReversed"));
 		DoubleSolenoidController *shifter = new DoubleSolenoidController(
 				iniFile.getInt("Drive", "PCMID"),
@@ -70,7 +72,26 @@ public:
 				iniFile.getInt("Shooter", "PCMID"),
 				iniFile.getInt("Shooter", "triggerSolenoidChannelA"),
 				iniFile.getInt("Shooter", "triggerSolenoidChannelB"));
-		shooter = new Shooter(motors_shooter, trigger);
+		shooter = new Shooter(motors_shooter, trigger,
+				iniFile.getFloat("Shooter", "rampRate"),
+				iniFile.getFloat("Shooter", "boostTime"),
+				iniFile.getFloat("Shooter", "boostAmnt"));
+
+		//PICKUP
+		DoubleSolenoidController *pickupSolenoids = new DoubleSolenoidController(
+				iniFile.getInt("Pickup", "PCMID"),
+				iniFile.getInt("Pickup", "solenoid1ChannelA"),
+				iniFile.getInt("Pickup", "solenoid1ChannelB"));
+		pickupSolenoids->addSolenoid(
+				iniFile.getInt("Pickup", "PCMID"),
+				iniFile.getInt("Pickup", "solenoid2ChannelA"),
+				iniFile.getInt("Pickup", "solenoid2ChannelB"));
+		DigitalInput *pickupSensorA = new DigitalInput(iniFile.getInt("Pickup", "sensorAID"));
+		DigitalInput *pickupSensorB = new DigitalInput(iniFile.getInt("Pickup", "sensorBID"));
+		pickerUpper = new Pickup(pickupSolenoids,
+				iniFile.getFloat("Pickup", "downTime"),
+				pickupSensorA,
+				pickupSensorB);
 
 		compressor = new Compressor(iniFile.getInt("Pneumatics", "compressorPCMID"));
 
@@ -111,11 +132,21 @@ public:
 		EdgeDetection btn_Start(false);
 
 		bool reverseMode = false;
+		double reverseDisabledCounter;
+		bool reverseDisabled = false;
 
 		int gear=0;
 
+		struct timeval lastTime;
+		gettimeofday(&lastTime, 0);
+
 		while (IsOperatorControl() && IsEnabled())
 		{
+			struct timeval thisTime;
+			gettimeofday(&thisTime, 0);
+			double dt = (thisTime.tv_sec - lastTime.tv_sec) + (thisTime.tv_usec - lastTime.tv_usec)/1000000.0;
+			lastTime = thisTime;
+
 			bool logThisTime = false;
 			logTicker++;
 			if(logTicker == 20)
@@ -141,10 +172,12 @@ public:
 			}
 			if(btn_B.isRising())
 			{
-				reverseMode = !reverseMode;
+				reverseDisabled = true;
+				reverseDisabledCounter = -.2;
 			}
 			if(btn_X.isRising())
 			{
+				shooter->toggle();
 			}
 			if(btn_Y.isRising())
 			{
@@ -158,8 +191,24 @@ public:
 			if(btn_Start.isRising())
 				shooter->modifyRPM(+0.01);
 
-			struct ShiftTankDrive::STDLogVals driveVals = std->update(forward, rot, gear, logThisTime);
-			struct Shooter::ShooterLogVals shooterVals = shooter->update(logThisTime);
+			if(reverseDisabled)
+			{
+				if(reverseDisabledCounter <= 0)
+				{
+					reverseDisabledCounter += dt;
+					if(reverseDisabledCounter > 0)
+						reverseMode = !reverseMode;
+				} else
+					reverseDisabledCounter += dt;
+				if(reverseDisabledCounter >= .2)
+					reverseDisabled = false;
+
+				forward = 0;
+			}
+
+			struct ShiftTankDrive::LogVals driveVals = std->update(forward, rot, gear, dt, logThisTime);
+			struct Shooter::LogVals shooterVals = shooter->update(dt, logThisTime);
+			struct Pickup::LogVals pickupVals = pickerUpper->update(dt, logThisTime);
 
 			//Logging
 			if(logThisTime)
@@ -167,6 +216,8 @@ public:
 				logTicker = 0;
 				SmartDashboard::PutNumber("Total Amps:", pdp.GetTotalCurrent());
 				SmartDashboard::PutNumber("Gear:", gear+1);
+				SmartDashboard::PutNumber("dt:", dt);
+				SmartDashboard::PutBoolean("would pickup ball:", pickerUpper->getSensorIsReady());
 
 				struct Logger::CSV csvData;
 
@@ -186,6 +237,7 @@ public:
 				csvData.shooterCylinderUp = shooterVals.cylinderUp;
 				csvData.psi = -1;
 				csvData.gear = gear + 1;
+				csvData.pickupIsUp = pickupVals.pickupIsUp;
 
 				Logger::instance()->logCSV(&csvData);
 			}

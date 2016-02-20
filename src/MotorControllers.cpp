@@ -4,7 +4,10 @@ SRXMotorController::SRXMotorController(uint8_t canid, bool reverse)
 {
 	list = new struct mclist;
 	list->motor = new CANTalon(canid);
-	list->reversed = reverse;
+	list->canid = canid;
+	if(reverse)
+		list->motor->SetInverted(true);
+	list->motor->SetSafetyEnabled(true);
 }
 
 void SRXMotorController::addMotor(uint8_t canid, bool reverse)
@@ -19,7 +22,8 @@ void SRXMotorController::addMotor(uint8_t canid, bool reverse)
 	l=l->next;
 
 	l->motor = new CANTalon(canid);
-	l->reversed = reverse;
+	l->motor->SetControlMode(CANTalon::ControlMode::kFollower);
+	l->motor->Set(list->canid);
 	l->canid = canid;
 }
 
@@ -45,36 +49,17 @@ void SRXMotorController::removeMotor(uint8_t canid)
 
 void SRXMotorController::set(float value)
 {
-	struct mclist *l=list;
-	l->motor->Set(l->reversed ? -value : value);
-	while(l->next)
-	{
-		l = l->next;
-		l->motor->Set(l->reversed ? -value : value);
-	}
-}
-
-void SRXMotorController::runFunctionOnAll(void (*func)(CANTalon *))
-{
-	struct mclist *l=list;
-	func(l->motor);
-	while(l->next)
-	{
-		l = l->next;
-		func(l->motor);
-	}
+	list->motor->Set(value);
 }
 
 void SRXMotorController::enable()
 {
 	struct mclist *l=list;
-	l->motor->EnableControl();
-	l->motor->SetSafetyEnabled(false);
+	l->motor->Enable();
 	while(l->next)
 	{
 		l = l->next;
-		l->motor->EnableControl();
-		l->motor->SetSafetyEnabled(false);
+		l->motor->Enable();
 	}
 }
 
@@ -82,11 +67,6 @@ void SRXMotorController::setControlMode(CANTalon::ControlMode controlmode)
 {
 	struct mclist *l=list;
 	l->motor->SetControlMode(controlmode);
-	while(l->next)
-	{
-		l = l->next;
-		l->motor->SetControlMode(controlmode);
-	}
 }
 
 void SRXMotorController::syncEncoders()

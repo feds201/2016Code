@@ -39,6 +39,7 @@ Logger::Logger() {
 			<< "shooterRPMActual" << ','
 			<< "shooterRPMSetpoint" << ','
 			<< "shooterCylinderUp" << ','
+			<< "pickupIsUp" << ','
 			<< "psi" << ','
 			<< "gear" << std::endl;
 }
@@ -91,6 +92,7 @@ void Logger::logCSV(struct CSV *data)
 			<< data->shooterRPMActual << ','
 			<< data->shooterRPMSetpoint << ','
 			<< (data->shooterCylinderUp ? 1 : 0) << ','
+			<< (data->pickupIsUp ? 1 : 0) << ','
 			<< data->psi << ','
 			<< data->gear << std::endl;
 	save();

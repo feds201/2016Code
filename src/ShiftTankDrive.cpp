@@ -32,9 +32,8 @@ ShiftTankDrive::~ShiftTankDrive()
 	delete motors_left;
 }
 
-struct ShiftTankDrive::STDLogVals ShiftTankDrive::update(float forward, float turn, int gear, bool logThisTime)
+struct ShiftTankDrive::LogVals ShiftTankDrive::update(float forward, float turn, bool setHighGear, double dt, bool logThisTime)
 {
-
 	float l = forward - turn;
 	float r = forward + turn;
 
@@ -45,7 +44,7 @@ struct ShiftTankDrive::STDLogVals ShiftTankDrive::update(float forward, float tu
 		r /= m;
 	}
 
-	shiftEdge.update(gear==1);
+	shiftEdge.update(setHighGear);
 	if(shiftEdge.isEdge())
 	{
 		numShifts++;
@@ -55,9 +54,9 @@ struct ShiftTankDrive::STDLogVals ShiftTankDrive::update(float forward, float tu
 	}
 
 
-	if(gear != lastGear)
+	if(setHighGear != lastGear)
 	{
-		switch(gear)
+		switch(setHighGear)
 		{
 		case 0:
 			solenoids->set(DoubleSolenoid::Value::kReverse);
@@ -70,11 +69,11 @@ struct ShiftTankDrive::STDLogVals ShiftTankDrive::update(float forward, float tu
 		default:
 			break;
 		}
-		shiftIterator = 0;
-		lastGear = gear;
-	} else if(shiftIterator < 200) {
-		shiftIterator++;
-		if(shiftIterator == 200)
+		shiftTimer = 0;
+		lastGear = setHighGear;
+	} else if(shiftTimer < 1) {
+		shiftTimer += dt;
+		if(shiftTimer >= 1)
 			solenoids->set(DoubleSolenoid::Value::kOff);
 	}
 
@@ -82,11 +81,14 @@ struct ShiftTankDrive::STDLogVals ShiftTankDrive::update(float forward, float tu
 	l = l*percent;
 	r = r*percent;
 
+	motors_left->enable();
+	motors_right->enable();
+
 	motors_left->set(l);//because the motors are rotated 180deg
 	motors_right->set(r);
 
 
-	struct STDLogVals ret;
+	struct LogVals ret;
 	if(logThisTime)
 	{
 		ret.values[0]=l;

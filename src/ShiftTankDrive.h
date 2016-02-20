@@ -14,14 +14,14 @@
 
 class ShiftTankDrive {
 public:
-	struct STDLogVals {
+	struct LogVals {
 		double values[4];
 	};
 
 	ShiftTankDrive(SRXMotorController *motors_left, SRXMotorController *motors_right, DoubleSolenoidController *solenoids);
 	virtual ~ShiftTankDrive();
 
-	struct ShiftTankDrive::STDLogVals update(float forward, float turn, int gear, bool logThisTime);
+	struct ShiftTankDrive::LogVals update(float forward, float turn, bool setHighGear, double dt, bool logThisTime);
 	void setPercent(float p);
 
 	void enable();
@@ -35,8 +35,8 @@ private:
 
 
 
-	int lastGear = 0;
-	int shiftIterator = 0;
+	bool lastGear = false;
+	double shiftTimer = 0;
 
 	int numShifts = 0;
 	EdgeDetection shiftEdge;

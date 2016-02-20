@@ -13,9 +13,13 @@
 
 class Pickup {
 public:
-	Pickup(DoubleSolenoidController *solenoid, int timerMax, DigitalInput *sensorA, DigitalInput *sensorB);
+	struct LogVals {
+		bool pickupIsUp;
+	};
 
-	void update();
+	Pickup(DoubleSolenoidController *solenoid, double downTime, DigitalInput *sensorA, DigitalInput *sensorB);
+
+	struct Pickup::LogVals update(double dt, bool logThisTime);
 
 	void setUp();
 	void setDown();
@@ -23,14 +27,14 @@ public:
 	void pickupOnce();
 	void pickupOnceSensored();
 
-private:
 	bool getSensorIsReady();
+
+private:
 	DigitalInput *sensorA;
 	DigitalInput *sensorB;
-	int timerMax;
-	int countdown = 0;
+	double downTime;
+	double countdown = 0;
 	DoubleSolenoidController *solenoid;
-	int pickupOnce_timer = 0;
 };
 
 #endif /* SRC_PICKUP_H_ */

@@ -19,21 +19,31 @@ class Shooter {
 	float rpm=7.15;
 
 	bool cylinderUp = false;
+	bool running = false;
+	float secsSinceStart = 0;
+	float runningVoltage = 0.0f;
+	float rampRate;
+	float boostTime;
+	float boostAmnt;
 
 public:
-	struct ShooterLogVals {
+	struct LogVals {
 		int RPMSActual;
 		int RPMSetpoint;
 		bool cylinderUp;
 	};
 
-	Shooter(SRXMotorController *shooterMotors, DoubleSolenoid *trigger);
+	Shooter(SRXMotorController *shooterMotors, DoubleSolenoid *trigger, float rampRate, float boostTime, float boostAmnt);
 	void shoot();
 
 	float modifyRPM(float delta);
 	float setRPM(float rpm);
 
-	struct Shooter::ShooterLogVals update(bool logThisTime);
+	void start();
+	void stop();
+	void toggle();
+
+	struct Shooter::LogVals update(double dt, bool logThisTime);
 };
 
 #endif /* SRC_SHOOTER_H_ */
