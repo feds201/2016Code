@@ -12,6 +12,7 @@
 #include <fstream>
 #include <time.h>
 #include <stdarg.h>
+#include "MyTimer.h"
 
 class Logger {
 public:
@@ -42,6 +43,8 @@ public:
         return singlton;
     }
 private:
+
+    MyTimer timer;
 
     struct timeval startTime;
 

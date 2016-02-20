@@ -64,8 +64,6 @@ struct ShiftTankDrive::LogVals ShiftTankDrive::update(float forward, float turn,
 		case 1:
 			solenoids->set(DoubleSolenoid::Value::kForward);
 			break;
-		case 2: solenoids->set(DoubleSolenoid::Value::kOff);
-			break;
 		default:
 			break;
 		}

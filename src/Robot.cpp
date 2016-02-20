@@ -7,6 +7,7 @@
 #include "Shooter.h"
 #include "INIReader.h"
 #include "Pickup.h"
+#include "MyTimer.h"
 
 /**
  * This is a demo program showing the use of the RobotDrive class.
@@ -21,6 +22,8 @@
 
 class Robot: public SampleRobot
 {
+	MyTimer timer;
+
 	Joystick controller_driver;
 	Joystick controller_operator;
 
@@ -137,15 +140,11 @@ public:
 
 		int gear=0;
 
-		struct timeval lastTime;
-		gettimeofday(&lastTime, 0);
+
 
 		while (IsOperatorControl() && IsEnabled())
 		{
-			struct timeval thisTime;
-			gettimeofday(&thisTime, 0);
-			double dt = (thisTime.tv_sec - lastTime.tv_sec) + (thisTime.tv_usec - lastTime.tv_usec)/1000000.0;
-			lastTime = thisTime;
+			double dt = timer.getDt();
 
 			bool logThisTime = false;
 			logTicker++;

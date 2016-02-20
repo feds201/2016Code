@@ -7,6 +7,7 @@
 
 #include <Logger.h>
 #include <wpilib.h>
+#include <MyTimer.h>
 
 Logger *Logger::singlton = 0;
 
@@ -52,8 +53,8 @@ void Logger::logInfo(const char *msg, ... )
 	char buffer[256];
 	vsnprintf(buffer, sizeof(buffer), msg, args);
 
-	logFile << "[INFO] " << buffer << std::endl;
-	std::cout << "[INFO] " << buffer << std::endl;
+	logFile << timer.getTotalTime() << " - [INFO] " << buffer << std::endl;
+	std::cout << timer.getTotalTime() << " - [INFO] " << buffer << std::endl;
 	save();
 }
 
@@ -72,10 +73,7 @@ void Logger::logError(const char *msg, ... )
 
 void Logger::logCSV(struct CSV *data)
 {
-	struct timeval tv;
-	gettimeofday(&tv, 0);
-
-	double time = (tv.tv_sec - startTime.tv_sec) + (tv.tv_usec - startTime.tv_usec)/1000000.0;
+	double time = timer.getTotalTime();
 
 	csvFile
 			<< time << ','
