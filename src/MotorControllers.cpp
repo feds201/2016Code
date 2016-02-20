@@ -1,13 +1,14 @@
 #include <MotorControllers.h>
 
 SRXMotorController::SRXMotorController(uint8_t canid, bool reverse)
+:CANTalon(canid)
 {
 	list = new struct mclist;
-	list->motor = new CANTalon(canid);
+	list->motor = 0;
 	list->canid = canid;
 	if(reverse)
-		list->motor->SetInverted(true);
-	list->motor->SetSafetyEnabled(true);
+		CANTalon::SetInverted(true);
+	CANTalon::SetSafetyEnabled(true);
 }
 
 void SRXMotorController::addMotor(uint8_t canid, bool reverse)
@@ -43,60 +44,20 @@ void SRXMotorController::removeMotor(uint8_t canid)
 		l->next->prev = l->prev;
 
 
+	l->motor->Disable();
 	delete l->motor;
 	delete l;
-}
-
-void SRXMotorController::set(float value)
-{
-	list->motor->Set(value);
 }
 
 void SRXMotorController::enable()
 {
 	struct mclist *l=list;
-	l->motor->Enable();
+	CANTalon::Enable();
 	while(l->next)
 	{
 		l = l->next;
 		l->motor->Enable();
 	}
-}
-
-void SRXMotorController::setControlMode(CANTalon::ControlMode controlmode)
-{
-	struct mclist *l=list;
-	l->motor->SetControlMode(controlmode);
-}
-
-void SRXMotorController::syncEncoders()
-{
-	struct mclist *l=list;
-	int encPos = l->motor->GetEncPosition();
-	while(l->next)
-	{
-		l = l->next;
-		l->motor->SetEncPosition(encPos);
-	}
-}
-
-struct SRXMotorController::EncoderInfo_Vel SRXMotorController::getEncoderInfo_Vel()
-{
-	struct SRXMotorController::EncoderInfo_Vel ret;
-
-	int num=1;
-	struct mclist *l=list;
-	float sum = l->motor->GetEncVel();
-	while(l->next)
-	{
-		l = l->next;
-		sum += l->motor->GetEncVel();
-		num++;
-	}
-
-	float avg = sum/(float)num;
-	ret.avg = avg;
-	return ret;
 }
 
 void SRXMotorController::disable()

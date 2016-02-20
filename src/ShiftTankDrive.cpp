@@ -18,11 +18,12 @@ ShiftTankDrive::ShiftTankDrive(SRXMotorController *motors_left, SRXMotorControll
  shiftEdge(false)
 
 {
-	motors_left->setControlMode(CANTalon::ControlMode::kPercentVbus);
-
+	motors_left->SetControlMode(CANTalon::ControlMode::kVoltage);
+	motors_left->SetVoltageRampRate(1000);
 	motors_left->enable();
 
-	motors_right->setControlMode(CANTalon::ControlMode::kPercentVbus);
+	motors_right->SetControlMode(CANTalon::ControlMode::kVoltage);
+	motors_right->SetVoltageRampRate(1000);
 	motors_right->enable();
 }
 
@@ -76,14 +77,14 @@ struct ShiftTankDrive::LogVals ShiftTankDrive::update(float forward, float turn,
 	}
 
 
-	l = l*percent;
-	r = r*percent;
+	l = l*percent*12;
+	r = r*percent*12;
 
 	motors_left->enable();
 	motors_right->enable();
 
-	motors_left->set(l);//because the motors are rotated 180deg
-	motors_right->set(r);
+	motors_left->Set(l);//because the motors are rotated 180deg
+	motors_right->Set(r);
 
 
 	struct LogVals ret;

@@ -76,7 +76,6 @@ public:
 				iniFile.getInt("Shooter", "triggerSolenoidChannelA"),
 				iniFile.getInt("Shooter", "triggerSolenoidChannelB"));
 		shooter = new Shooter(motors_shooter, trigger,
-				iniFile.getFloat("Shooter", "rampRate"),
 				iniFile.getFloat("Shooter", "boostTime"),
 				iniFile.getFloat("Shooter", "boostAmnt"));
 

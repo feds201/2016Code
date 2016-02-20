@@ -21,8 +21,6 @@ class Shooter {
 	bool cylinderUp = false;
 	bool running = false;
 	float secsSinceStart = 0;
-	float runningVoltage = 0.0f;
-	float rampRate;
 	float boostTime;
 	float boostAmnt;
 
@@ -33,7 +31,7 @@ public:
 		bool cylinderUp;
 	};
 
-	Shooter(SRXMotorController *shooterMotors, DoubleSolenoid *trigger, float rampRate, float boostTime, float boostAmnt);
+	Shooter(SRXMotorController *shooterMotors, DoubleSolenoid *trigger, float boostTime, float boostAmnt);
 	void shoot();
 
 	float modifyRPM(float delta);

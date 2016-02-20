@@ -8,14 +8,14 @@
 #include <Shooter.h>
 #include "Logger.h"
 
-Shooter::Shooter(SRXMotorController *shooterMotors, DoubleSolenoid *trigger, float rampRate, float boostTime, float boostAmnt) :
+Shooter::Shooter(SRXMotorController *shooterMotors, DoubleSolenoid *trigger, float boostTime, float boostAmnt) :
 shooterMotorList(shooterMotors),
 solenoidTrigger(trigger),
-rampRate(rampRate),
 boostTime(boostTime),
 boostAmnt(boostAmnt)
 {
-	shooterMotorList->setControlMode(CANTalon::ControlMode::kVoltage);
+	shooterMotorList->SetControlMode(CANTalon::ControlMode::kVoltage);
+	shooterMotorList->SetVoltageRampRate(10000);
 	shooterMotorList->enable();
 }
 
@@ -52,41 +52,20 @@ struct Shooter::LogVals Shooter::update(double dt, bool logThisTime)
 		}
 	}
 
+	float setpoint = rpm;
 	if(running)
 	{
-		float setpoint = rpm;
-		float realRampRate = rampRate;
 		if(secsSinceStart < boostTime)
 		{
 			secsSinceStart += dt;
 			setpoint += boostAmnt;
-			realRampRate *= 20;
-		}
-		SmartDashboard::PutNumber("SSS:", secsSinceStart);
-		SmartDashboard::PutNumber("setpoint:", setpoint);
-		SmartDashboard::PutNumber("rv:", runningVoltage);
-		if(setpoint > runningVoltage)
-		{
-			runningVoltage += realRampRate*dt;
-			if(runningVoltage > setpoint)
-				runningVoltage = setpoint;
-		} else if(setpoint < runningVoltage)
-		{
-			runningVoltage -= realRampRate*dt;
-			if(runningVoltage < setpoint)
-				runningVoltage = setpoint;
 		}
 	} else {
-		if(runningVoltage > 0)
-		{
-			runningVoltage -= rampRate*dt;
-			if(runningVoltage < 0)
-				runningVoltage = 0;
-		}
+		setpoint = 0;
 	}
+	shooterMotorList->Set(setpoint);
 
 	shooterMotorList->enable();
-	shooterMotorList->set(runningVoltage);
 	struct LogVals ret;
 	if(logThisTime)
 	{

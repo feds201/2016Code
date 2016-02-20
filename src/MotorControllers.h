@@ -4,7 +4,7 @@
 #include "CANTalon.h"
 #include "WPILib.h"
 
-class SRXMotorController {
+class SRXMotorController : public CANTalon {
 public:
 	struct EncoderInfo_Vel {
 		float avg;
@@ -12,16 +12,12 @@ public:
 	};
 
 	SRXMotorController(uint8_t canid, bool reverse);
+
 	void addMotor(uint8_t canid, bool reverse);
 	void removeMotor(uint8_t canid);
 
-	void set(float value);
 	void enable();
 	void disable();
-	void setControlMode(CANTalon::ControlMode);
-	void syncEncoders();
-	struct SRXMotorController::EncoderInfo_Vel getEncoderInfo_Vel();
-	void runFunctionOnAll(void (*func)(CANTalon *motor));
 
 private:
 	struct mclist {
