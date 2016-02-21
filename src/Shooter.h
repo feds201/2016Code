@@ -9,20 +9,21 @@
 #define SRC_SHOOTER_H_
 
 #include "MotorControllers.h"
+#include "INIReader.h"
 #include "WPILIB.h"
 
 class Shooter {
-	SRXMotorController *shooterMotorList;
+	CANTalon *motorL;
+	CANTalon *motorR;
 	DoubleSolenoid *solenoidTrigger;
 
-	int countdown=0;
-	float rpm=7.15;
+	double shooterPusherCountdown=0;
+	double shooterPusherTime = 0;
+	float rpm=6000;
+	int encCodesPerRevNotQuadrature;
 
 	bool cylinderUp = false;
 	bool running = false;
-	float secsSinceStart = 0;
-	float boostTime;
-	float boostAmnt;
 
 public:
 	struct LogVals {
@@ -31,7 +32,7 @@ public:
 		bool cylinderUp;
 	};
 
-	Shooter(SRXMotorController *shooterMotors, DoubleSolenoid *trigger, float boostTime, float boostAmnt);
+	Shooter(INIReader *iniFile);
 	void shoot();
 
 	float modifyRPM(float delta);

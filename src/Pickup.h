@@ -10,6 +10,7 @@
 
 #include "WPILIB.h"
 #include "SolenoidControllers.h"
+#include "INIReader.h"
 
 class Pickup {
 public:
@@ -17,7 +18,7 @@ public:
 		bool pickupIsUp;
 	};
 
-	Pickup(DoubleSolenoidController *solenoid, double downTime, DigitalInput *sensorA, DigitalInput *sensorB);
+	Pickup(INIReader *iniFile);
 
 	struct Pickup::LogVals update(double dt, bool logThisTime);
 
@@ -35,6 +36,7 @@ private:
 	double downTime;
 	double countdown = 0;
 	DoubleSolenoidController *solenoid;
+	bool pickupReady = true;
 };
 
 #endif /* SRC_PICKUP_H_ */

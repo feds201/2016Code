@@ -33,3 +33,8 @@ bool EdgeDetection::isFalling()
 {
 	return (thisState == false && lastState == true);
 }
+
+bool EdgeDetection::getState()
+{
+	return thisState;
+}

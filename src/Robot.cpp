@@ -45,57 +45,12 @@ public:
 			controller_operator(1),
 			iniFile("/config.ini")
 	{
-		//SHIFT DRIVE TRAIN
-		SRXMotorController *motors_left = new SRXMotorController(
-				iniFile.getInt("Drive", "leftPrimaryMotorID"),
-				iniFile.getBool("Drive", "leftPrimaryMotorReversed"));
-		motors_left->addMotor(
-				iniFile.getInt("Drive", "leftSecondaryMotorID"),
-				iniFile.getBool("Drive", "leftSecondaryMotorReversed"));
-		SRXMotorController *motors_right = new SRXMotorController(
-				iniFile.getInt("Drive", "rightPrimaryMotorID"),
-				iniFile.getBool("Drive", "rightPrimaryMotorReversed"));
-		motors_right->addMotor(
-				iniFile.getInt("Drive", "rightSecondaryMotorID"),
-				iniFile.getBool("Drive", "rightSecondaryMotorReversed"));
-		DoubleSolenoidController *shifter = new DoubleSolenoidController(
-				iniFile.getInt("Drive", "PCMID"),
-				iniFile.getInt("Drive", "shiftSolenoidChannelA"),
-				iniFile.getInt("Drive", "shiftSolenoidChannelB"));
-		std = new ShiftTankDrive(motors_left, motors_right, shifter);
-
-		//SHOOTER
-		SRXMotorController *motors_shooter = new SRXMotorController(
-				iniFile.getInt("Shooter", "leftMotorID"),
-				iniFile.getBool("Shooter", "leftMotorReversed"));
-		motors_shooter->addMotor(
-				iniFile.getInt("Shooter", "rightMotorID"),
-				iniFile.getBool("Shooter", "rightMotorReversed"));
-		DoubleSolenoid *trigger = new DoubleSolenoid(
-				iniFile.getInt("Shooter", "PCMID"),
-				iniFile.getInt("Shooter", "triggerSolenoidChannelA"),
-				iniFile.getInt("Shooter", "triggerSolenoidChannelB"));
-		shooter = new Shooter(motors_shooter, trigger,
-				iniFile.getFloat("Shooter", "boostTime"),
-				iniFile.getFloat("Shooter", "boostAmnt"));
-
-		//PICKUP
-		DoubleSolenoidController *pickupSolenoids = new DoubleSolenoidController(
-				iniFile.getInt("Pickup", "PCMID"),
-				iniFile.getInt("Pickup", "solenoid1ChannelA"),
-				iniFile.getInt("Pickup", "solenoid1ChannelB"));
-		pickupSolenoids->addSolenoid(
-				iniFile.getInt("Pickup", "PCMID"),
-				iniFile.getInt("Pickup", "solenoid2ChannelA"),
-				iniFile.getInt("Pickup", "solenoid2ChannelB"));
-		DigitalInput *pickupSensorA = new DigitalInput(iniFile.getInt("Pickup", "sensorAID"));
-		DigitalInput *pickupSensorB = new DigitalInput(iniFile.getInt("Pickup", "sensorBID"));
-		pickerUpper = new Pickup(pickupSolenoids,
-				iniFile.getFloat("Pickup", "downTime"),
-				pickupSensorA,
-				pickupSensorB);
+		std = new ShiftTankDrive(&iniFile);
+		shooter = new Shooter(&iniFile);
+		pickerUpper = new Pickup(&iniFile);
 
 		compressor = new Compressor(iniFile.getInt("Pneumatics", "compressorPCMID"));
+		compressor->SetClosedLoopControl(true);
 
 		//LOGGER
 		logInterval = iniFile.getInt("Logger", "interval");
@@ -104,7 +59,7 @@ public:
 
 	void RobotInit()
 	{
-		SmartDashboard::PutString("Robot Name:", iniFile.get("Robot", "Name"));
+		SmartDashboard::PutString("Robot Name:", iniFile.get("Robot", "name"));
 	}
 
 	float deadband(float f)
@@ -130,6 +85,8 @@ public:
 		EdgeDetection btn_B(false);
 		EdgeDetection btn_X(false);
 		EdgeDetection btn_Y(false);
+		EdgeDetection btn_LBumper(false);
+		EdgeDetection btn_RBumper(false);
 		EdgeDetection btn_Back(false);
 		EdgeDetection btn_Start(false);
 
@@ -138,8 +95,6 @@ public:
 		bool reverseDisabled = false;
 
 		int gear=0;
-
-
 
 		while (IsOperatorControl() && IsEnabled())
 		{
@@ -157,6 +112,10 @@ public:
 			btn_B.update(controller_driver.GetRawButton(2));
 			btn_X.update(controller_driver.GetRawButton(3));
 			btn_Y.update(controller_driver.GetRawButton(4));
+			btn_LBumper.update(controller_driver.GetRawButton(5));
+			btn_RBumper.update(controller_driver.GetRawButton(6));
+			btn_Back.update(controller_driver.GetRawButton(7));
+			btn_Start.update(controller_driver.GetRawButton(8));
 
 			float forward = deadband(-controller_driver.GetRawAxis(1));
 			float rot = deadband(-controller_driver.GetRawAxis(4));
@@ -166,16 +125,25 @@ public:
 
 			if(btn_A.isRising())
 			{
-				shooter->shoot();
+				if(btn_LBumper.getState())
+					shooter->toggle();
+				else
+					shooter->shoot();
 			}
 			if(btn_B.isRising())
 			{
 				reverseDisabled = true;
 				reverseDisabledCounter = -.2;
 			}
-			if(btn_X.isRising())
+			if(btn_RBumper.isRising())
 			{
-				shooter->toggle();
+			}
+			if(btn_X.getState())
+			{
+				if(btn_LBumper.getState())
+					pickerUpper->pickupOnce();
+				else
+					pickerUpper->pickupOnceSensored();
 			}
 			if(btn_Y.isRising())
 			{

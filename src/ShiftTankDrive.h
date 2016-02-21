@@ -11,6 +11,7 @@
 #include "MotorControllers.h"
 #include "SolenoidControllers.h"
 #include "EdgeDetection.h"
+#include "INIReader.h"
 
 class ShiftTankDrive {
 public:
@@ -18,7 +19,7 @@ public:
 		double values[4];
 	};
 
-	ShiftTankDrive(SRXMotorController *motors_left, SRXMotorController *motors_right, DoubleSolenoidController *solenoids);
+	ShiftTankDrive(INIReader *iniFile);
 	virtual ~ShiftTankDrive();
 
 	struct ShiftTankDrive::LogVals update(float forward, float turn, bool setHighGear, double dt, bool logThisTime);
@@ -31,9 +32,6 @@ private:
 	SRXMotorController *motors_left;
 	SRXMotorController *motors_right;
 	DoubleSolenoidController *solenoids;
-
-
-
 
 	bool lastGear = false;
 	double shiftTimer = 0;

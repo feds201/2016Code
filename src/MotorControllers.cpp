@@ -6,6 +6,7 @@ SRXMotorController::SRXMotorController(uint8_t canid, bool reverse)
 	list = new struct mclist;
 	list->motor = 0;
 	list->canid = canid;
+	list->reversed = reverse;
 	if(reverse)
 		CANTalon::SetInverted(true);
 	CANTalon::SetSafetyEnabled(true);
@@ -25,6 +26,9 @@ void SRXMotorController::addMotor(uint8_t canid, bool reverse)
 	l->motor = new CANTalon(canid);
 	l->motor->SetControlMode(CANTalon::ControlMode::kFollower);
 	l->motor->Set(list->canid);
+	l->reversed = reverse;
+	l->motor->SetClosedLoopOutputDirection(reverse != list->reversed);
+
 	l->canid = canid;
 }
 

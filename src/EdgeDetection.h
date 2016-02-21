@@ -16,6 +16,7 @@ public:
 	bool isEdge();
 	bool isRising();
 	bool isFalling();
+	bool getState();
 
 private:
 	bool lastState;
