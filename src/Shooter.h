@@ -27,7 +27,8 @@ class Shooter {
 
 public:
 	struct LogVals {
-		int RPMSActual;
+		int RPMSActualL;
+		int RPMSActualR;
 		int RPMSetpoint;
 		bool cylinderUp;
 	};
@@ -40,7 +41,7 @@ public:
 
 	void start();
 	void stop();
-	void toggle();
+	void toggleWheels();
 
 	struct Shooter::LogVals update(double dt, bool logThisTime);
 };

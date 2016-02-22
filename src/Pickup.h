@@ -24,6 +24,7 @@ public:
 
 	void setUp();
 	void setDown();
+	void togglePickup();
 
 	void pickupOnce();
 	void pickupOnceSensored();
@@ -37,6 +38,7 @@ private:
 	double countdown = 0;
 	DoubleSolenoidController *solenoid;
 	bool pickupReady = true;
+	bool pickupIsUp = true;
 };
 
 #endif /* SRC_PICKUP_H_ */

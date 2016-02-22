@@ -126,7 +126,7 @@ public:
 			if(btn_A.isRising())
 			{
 				if(btn_LBumper.getState())
-					shooter->toggle();
+					shooter->toggleWheels();
 				else
 					shooter->shoot();
 			}
@@ -141,7 +141,7 @@ public:
 			if(btn_X.getState())
 			{
 				if(btn_LBumper.getState())
-					pickerUpper->pickupOnce();
+					pickerUpper->togglePickup();
 				else
 					pickerUpper->pickupOnceSensored();
 			}
@@ -153,9 +153,9 @@ public:
 					gear=0;
 			}
 			if(btn_Back.isRising())
-				shooter->modifyRPM(-0.01);
+				shooter->modifyRPM(-100);
 			if(btn_Start.isRising())
-				shooter->modifyRPM(+0.01);
+				shooter->modifyRPM(+100);
 
 			if(reverseDisabled)
 			{
@@ -185,7 +185,7 @@ public:
 				SmartDashboard::PutNumber("dt:", dt);
 				SmartDashboard::PutBoolean("would pickup ball:", pickerUpper->getSensorIsReady());
 
-				struct Logger::CSV csvData;
+				struct Logger::CSVVals csvData;
 
 				csvData.driveSetpoints[0] = driveVals.values[0];
 				csvData.driveSetpoints[1] = driveVals.values[1];
@@ -194,11 +194,12 @@ public:
 
 				csvData.voltage = pdp.GetVoltage();
 				csvData.totalCurrent = pdp.GetTotalCurrent();
-				csvData.driveCurrents[0] = pdp.GetCurrent(12);
-				csvData.driveCurrents[1] = pdp.GetCurrent(13);
-				csvData.driveCurrents[2] = pdp.GetCurrent(14);
-				csvData.driveCurrents[3] = pdp.GetCurrent(15);
-				csvData.shooterRPMActual = shooterVals.RPMSActual;
+				csvData.driveCurrents[0] = pdp.GetCurrent(0);
+				csvData.driveCurrents[1] = pdp.GetCurrent(1);
+				csvData.driveCurrents[2] = pdp.GetCurrent(2);
+				csvData.driveCurrents[3] = pdp.GetCurrent(3);
+				csvData.shooterRPMActualL = shooterVals.RPMSActualL;
+				csvData.shooterRPMActualR = shooterVals.RPMSActualR;
 				csvData.shooterRPMSetpoint = shooterVals.RPMSetpoint;
 				csvData.shooterCylinderUp = shooterVals.cylinderUp;
 				csvData.psi = -1;

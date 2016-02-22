@@ -11,13 +11,13 @@
 Shooter::Shooter(INIReader *iniFile)
 {
 	motorL = new CANTalon(iniFile->getInt("Shooter", "leftMotorID"));
-	motorL->SetInverted(iniFile->getBool("Shooter", "leftMotorReversed"));
+	motorL->SetClosedLoopOutputDirection(iniFile->getBool("Shooter", "leftMotorReversed"));
+
+	motorL->SetSensorDirection(iniFile->getBool("Shooter", "leftMotorReversed"));
+	motorR->SetSensorDirection(iniFile->getBool("Shooter", "rightMotorReversed"));
 
 	motorR = new CANTalon(iniFile->getInt("Shooter", "rightMotorID"));
 	motorR->SetInverted(iniFile->getBool("Shooter", "rightMotorReversed"));
-
-	motorR->SetSensorDirection(iniFile->getBool("Shooter", "rightMotorReversed"));
-	motorL->SetSensorDirection(iniFile->getBool("Shooter", "leftMotorReversed"));
 
 	solenoidTrigger = new DoubleSolenoid(
 			iniFile->getInt("Shooter", "PCMID"),
@@ -27,18 +27,18 @@ Shooter::Shooter(INIReader *iniFile)
 	shooterPusherTime = iniFile->getFloat("Shooter", "shooterPusherTime");
 
 	encCodesPerRevNotQuadrature = iniFile->getInt("Shooter", "encCodesPerRev");
-	motorL->ConfigEncoderCodesPerRev(encCodesPerRevNotQuadrature*4);
-	motorR->ConfigEncoderCodesPerRev(encCodesPerRevNotQuadrature*4);
 
 	motorL->SetControlMode(CANTalon::ControlMode::kSpeed);
 	motorR->SetControlMode(CANTalon::ControlMode::kSpeed);
 
 	motorL->SetPID(iniFile->getFloat("Shooter", "P"),
 			iniFile->getFloat("Shooter", "I"),
-			iniFile->getFloat("Shooter", "D"));
+			iniFile->getFloat("Shooter", "D"),
+			iniFile->getFloat("Shooter", "F"));
 	motorR->SetPID(iniFile->getFloat("Shooter", "P"),
 			iniFile->getFloat("Shooter", "I"),
-			iniFile->getFloat("Shooter", "D"));
+			iniFile->getFloat("Shooter", "D"),
+			iniFile->getFloat("Shooter", "F"));
 }
 
 void Shooter::shoot()
@@ -77,7 +77,7 @@ struct Shooter::LogVals Shooter::update(double dt, bool logThisTime)
 	float setpoint = rpm;
 	if(running)
 	{
-		setpoint = rpm * ((4.0*(double)encCodesPerRevNotQuadrature) / (600.0)) * (2.0 / 3.0);
+		setpoint = rpm * ((4.0*(double)encCodesPerRevNotQuadrature) / (600.0));
 	} else {
 		setpoint = 0;
 	}
@@ -90,8 +90,12 @@ struct Shooter::LogVals Shooter::update(double dt, bool logThisTime)
 	struct LogVals ret;
 	if(logThisTime)
 	{
-		SmartDashboard::PutNumber("shoot enc speed L: ", motorL->GetEncVel() * (600.0 / ((double)encCodesPerRevNotQuadrature*4.0)));
-		SmartDashboard::PutNumber("shoot enc speed R: ", motorR->GetEncVel() * (600.0 / ((double)encCodesPerRevNotQuadrature*4.0)));
+		SmartDashboard::PutNumber("shoot enc speed L: ", motorL->GetSpeed() * (600.0 / ((double)encCodesPerRevNotQuadrature*4.0)));
+		SmartDashboard::PutNumber("shoot enc speed R: ", motorR->GetSpeed() * (600.0 / ((double)encCodesPerRevNotQuadrature*4.0)));
+		SmartDashboard::PutNumber("shoot enc speed RAW L: ", motorL->GetSpeed());
+		SmartDashboard::PutNumber("shoot enc speed RAW R: ", motorR->GetSpeed());
+		ret.RPMSActualL = motorL->GetSpeed() * (600.0 / ((double)encCodesPerRevNotQuadrature*4.0));
+		ret.RPMSActualR = motorR->GetSpeed() * (600.0 / ((double)encCodesPerRevNotQuadrature*4.0));
 		ret.RPMSetpoint = rpm;
 		ret.cylinderUp = this->cylinderUp;
 	}
@@ -109,7 +113,7 @@ void Shooter::stop()
 	running = false;
 }
 
-void Shooter::toggle()
+void Shooter::toggleWheels()
 {
 	running = !running;
 }

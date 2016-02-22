@@ -16,12 +16,13 @@
 
 class Logger {
 public:
-	struct CSV {
+	struct CSVVals {
 		double voltage;
 		double totalCurrent;
 		double driveSetpoints[4];
 		double driveCurrents[4];
-		double shooterRPMActual;
+		double shooterRPMActualL;
+		double shooterRPMActualR;
 		double shooterRPMSetpoint;
 		bool shooterCylinderUp;
 		bool pickupIsUp;
@@ -34,7 +35,7 @@ public:
 	void logError(const char *msg, ... );
 	void logInfo(const char *msg, ... );
 
-	void logCSV(struct CSV *data);
+	void logCSV(struct CSVVals *data);
 
     static Logger *instance()
     {

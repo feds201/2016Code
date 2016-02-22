@@ -37,7 +37,8 @@ Logger::Logger() {
 			<< "driveValues1" << ','
 			<< "driveValues2" << ','
 			<< "driveValues3" << ','
-			<< "shooterRPMActual" << ','
+			<< "shooterRPMActualL" << ','
+			<< "shooterRPMActualR" << ','
 			<< "shooterRPMSetpoint" << ','
 			<< "shooterCylinderUp" << ','
 			<< "pickupIsUp" << ','
@@ -71,7 +72,7 @@ void Logger::logError(const char *msg, ... )
 	save();
 }
 
-void Logger::logCSV(struct CSV *data)
+void Logger::logCSV(struct CSVVals *data)
 {
 	double time = timer.getTotalTime();
 
@@ -87,7 +88,8 @@ void Logger::logCSV(struct CSV *data)
 			<< data->driveSetpoints[1] << ','
 			<< data->driveSetpoints[2] << ','
 			<< data->driveSetpoints[3] << ','
-			<< data->shooterRPMActual << ','
+			<< data->shooterRPMActualL << ','
+			<< data->shooterRPMActualR << ','
 			<< data->shooterRPMSetpoint << ','
 			<< (data->shooterCylinderUp ? 1 : 0) << ','
 			<< (data->pickupIsUp ? 1 : 0) << ','

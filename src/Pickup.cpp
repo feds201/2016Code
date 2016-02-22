@@ -22,8 +22,8 @@ Pickup::Pickup(INIReader *iniFile)
 
 	downTime = iniFile->getFloat("Pickup", "downTime");
 
-	solenoid->set(DoubleSolenoid::Value::kReverse);
 	countdown = 0;
+	setUp();
 }
 
 struct Pickup::LogVals Pickup::update(double dt, bool logThisTime)
@@ -33,28 +33,45 @@ struct Pickup::LogVals Pickup::update(double dt, bool logThisTime)
 		countdown -= dt;
 		if(countdown <= 0)
 		{
-			solenoid->set(DoubleSolenoid::Value::kReverse);
+			setUp();
 			pickupReady = true;
 		}
 	}
 	struct Pickup::LogVals ret;
-	ret.pickupIsUp = true;
+	ret.pickupIsUp = pickupIsUp;
 	return ret;
 }
 
 void Pickup::setUp()
 {
 	solenoid->set(DoubleSolenoid::Value::kReverse);
+	pickupIsUp=true;
 }
 
 void Pickup::setDown()
 {
 	solenoid->set(DoubleSolenoid::Value::kForward);
+	pickupIsUp=false;
+}
+
+void Pickup::togglePickup()
+{
+	if(pickupIsUp)
+		setDown();
+	else
+		setUp();
 }
 
 void Pickup::pickupOnce()
 {
-	solenoid->set(DoubleSolenoid::Value::kForward);
+	if(!pickupReady)
+		return;
+	if(!pickupIsUp)
+	{
+		setUp();
+		return;
+	}
+	setDown();
 	countdown = downTime;
 	pickupReady = false;
 }
