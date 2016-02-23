@@ -64,13 +64,13 @@ void Pickup::togglePickup()
 
 void Pickup::pickupOnce()
 {
-	if(!pickupReady)
-		return;
 	if(!pickupIsUp)
 	{
 		setUp();
 		return;
 	}
+	if(!pickupReady)
+		return;
 	setDown();
 	countdown = downTime;
 	pickupReady = false;
@@ -78,6 +78,11 @@ void Pickup::pickupOnce()
 
 void Pickup::pickupOnceSensored()
 {
+	if(!pickupIsUp)
+	{
+		setUp();
+		return;
+	}
 	if(getSensorIsReady())
 	{
 		pickupOnce();

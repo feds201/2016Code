@@ -41,7 +41,7 @@ class Robot: public SampleRobot
 
 public:
 	Robot() :
-			controller_driver(5),
+			controller_driver(0),
 			controller_operator(1),
 			iniFile("/config.ini")
 	{
@@ -59,7 +59,7 @@ public:
 
 	void RobotInit()
 	{
-		SmartDashboard::PutString("Robot Name:", iniFile.get("Robot", "name"));
+		//SmartDashboard::PutString("Robot Name:", iniFile.get("Robot", "name"));
 	}
 
 	float deadband(float f)
@@ -108,14 +108,14 @@ public:
 				logThisTime = true;
 			}
 
-			btn_A.update(controller_driver.GetRawButton(1));
+			btn_A.update(controller_driver.GetRawButton(1) || controller_operator.GetRawButton(1));
 			btn_B.update(controller_driver.GetRawButton(2));
-			btn_X.update(controller_driver.GetRawButton(3));
+			btn_X.update(controller_driver.GetRawButton(3) || controller_operator.GetRawButton(3));
 			btn_Y.update(controller_driver.GetRawButton(4));
-			btn_LBumper.update(controller_driver.GetRawButton(5));
-			btn_RBumper.update(controller_driver.GetRawButton(6));
-			btn_Back.update(controller_driver.GetRawButton(7));
-			btn_Start.update(controller_driver.GetRawButton(8));
+			btn_LBumper.update(controller_driver.GetRawButton(5) || controller_operator.GetRawButton(5));
+			btn_RBumper.update(controller_driver.GetRawButton(6) || controller_operator.GetRawButton(6));
+			btn_Back.update(controller_driver.GetRawButton(7) || controller_operator.GetRawButton(7));
+			btn_Start.update(controller_driver.GetRawButton(8) || controller_operator.GetRawButton(8));
 
 			float forward = deadband(-controller_driver.GetRawAxis(1));
 			float rot = deadband(-controller_driver.GetRawAxis(4));
@@ -135,16 +135,14 @@ public:
 				reverseDisabled = true;
 				reverseDisabledCounter = -.2;
 			}
-			if(btn_RBumper.isRising())
-			{
-			}
+
 			if(btn_X.getState())
-			{
-				if(btn_LBumper.getState())
-					pickerUpper->togglePickup();
-				else
+				if(!btn_LBumper.getState())
 					pickerUpper->pickupOnceSensored();
-			}
+
+			if(btn_X.isRising() && btn_LBumper.getState())
+				pickerUpper->togglePickup();
+
 			if(btn_Y.isRising())
 			{
 				if(gear==0)

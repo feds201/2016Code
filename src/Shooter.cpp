@@ -11,13 +11,13 @@
 Shooter::Shooter(INIReader *iniFile)
 {
 	motorL = new CANTalon(iniFile->getInt("Shooter", "leftMotorID"));
+	motorR = new CANTalon(iniFile->getInt("Shooter", "rightMotorID"));
+
 	motorL->SetClosedLoopOutputDirection(iniFile->getBool("Shooter", "leftMotorReversed"));
+	motorR->SetClosedLoopOutputDirection(iniFile->getBool("Shooter", "rightMotorReversed"));
 
 	motorL->SetSensorDirection(iniFile->getBool("Shooter", "leftMotorReversed"));
 	motorR->SetSensorDirection(iniFile->getBool("Shooter", "rightMotorReversed"));
-
-	motorR = new CANTalon(iniFile->getInt("Shooter", "rightMotorID"));
-	motorR->SetInverted(iniFile->getBool("Shooter", "rightMotorReversed"));
 
 	solenoidTrigger = new DoubleSolenoid(
 			iniFile->getInt("Shooter", "PCMID"),
