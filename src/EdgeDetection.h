@@ -10,7 +10,7 @@
 
 class EdgeDetection {
 public:
-	EdgeDetection(bool inital);
+	EdgeDetection(bool inital=false);
 	void update(bool state);
 
 	bool isEdge();

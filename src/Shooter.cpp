@@ -1,10 +1,3 @@
-/*
- * Shooter.cpp
- *
- *  Created on: Feb 9, 2016
- *      Author: feds
- */
-
 #include <Shooter.h>
 #include "Logger.h"
 

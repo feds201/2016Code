@@ -8,17 +8,7 @@
 #include "INIReader.h"
 #include "Pickup.h"
 #include "MyTimer.h"
-
-/**
- * This is a demo program showing the use of the RobotDrive class.
- * The SampleRobot class is the base of a robot application that will automatically call your
- * Autonomous and OperatorControl methods at the right time as controlled by the switches on
- * the driver station or the field controls.
- *
- * WARNING: While it may look like a good choice to use for your code if you're inexperienced,
- * don't. Unless cyou know what you are doing, complex code will be much more difficult under
- * this system. Use IterativeRobot or Command-Based instead if you're new.
- */
+#include "XboxButtons.h"
 
 class Robot: public SampleRobot
 {
@@ -81,20 +71,14 @@ public:
 
 	void OperatorControl()
 	{
-		EdgeDetection btn_A(false);
-		EdgeDetection btn_B(false);
-		EdgeDetection btn_X(false);
-		EdgeDetection btn_Y(false);
-		EdgeDetection btn_LBumper(false);
-		EdgeDetection btn_RBumper(false);
-		EdgeDetection btn_Back(false);
-		EdgeDetection btn_Start(false);
+		EdgeDetection btns_driver[10];
+		EdgeDetection btns_operator[10];
 
 		bool reverseMode = false;
 		double reverseDisabledCounter;
 		bool reverseDisabled = false;
 
-		int gear=0;
+		bool highGear=false;
 
 		while (IsOperatorControl() && IsEnabled())
 		{
@@ -108,14 +92,10 @@ public:
 				logThisTime = true;
 			}
 
-			btn_A.update(controller_driver.GetRawButton(1) || controller_operator.GetRawButton(1));
-			btn_B.update(controller_driver.GetRawButton(2));
-			btn_X.update(controller_driver.GetRawButton(3) || controller_operator.GetRawButton(3));
-			btn_Y.update(controller_driver.GetRawButton(4));
-			btn_LBumper.update(controller_driver.GetRawButton(5) || controller_operator.GetRawButton(5));
-			btn_RBumper.update(controller_driver.GetRawButton(6) || controller_operator.GetRawButton(6));
-			btn_Back.update(controller_driver.GetRawButton(7) || controller_operator.GetRawButton(7));
-			btn_Start.update(controller_driver.GetRawButton(8) || controller_operator.GetRawButton(8));
+			for(int i=0; i < sizeof(btns_driver); i++)
+				btns_driver[i].update(controller_driver.GetRawButton(i+1));
+			for(int i=0; i < sizeof(btns_operator); i++)
+				btns_driver[i].update(controller_operator.GetRawButton(i+1));
 
 			float forward = deadband(-controller_driver.GetRawAxis(1));
 			float rot = deadband(-controller_driver.GetRawAxis(4));
@@ -123,36 +103,34 @@ public:
 			forward *= fabs(forward) * (reverseMode ? -1 : 1);
 			rot *= fabs(rot);
 
-			if(btn_A.isRising())
-			{
-				if(btn_LBumper.getState())
+			//SHOOTER
+			if(btns_driver[XBOX_BTN_A].isRising() && btns_driver[XBOX_BTN_LB].getState())
+					shooter->shoot();
+			if(btns_operator[XBOX_BTN_A].isRising())
+				if(btns_operator[XBOX_BTN_LB].getState())
 					shooter->toggleWheels();
 				else
 					shooter->shoot();
-			}
-			if(btn_B.isRising())
+
+			//REVERSE MODE
+			if(btns_driver[XBOX_BTN_B].isRising())
 			{
 				reverseDisabled = true;
 				reverseDisabledCounter = -.2;
 			}
 
-			if(btn_X.getState())
-				if(!btn_LBumper.getState())
-					pickerUpper->pickupOnceSensored();
+			if(btns_operator[XBOX_BTN_X].getState() && !btns_operator[XBOX_BTN_LB].getState())
+				pickerUpper->pickupOnceSensored();
 
-			if(btn_X.isRising() && btn_LBumper.getState())
+			if(btns_operator[XBOX_BTN_X].isRising() && btns_operator[XBOX_BTN_LB].getState())
 				pickerUpper->togglePickup();
 
-			if(btn_Y.isRising())
-			{
-				if(gear==0)
-					gear=1;
-				else
-					gear=0;
-			}
-			if(btn_Back.isRising())
+			if(btns_driver[XBOX_BTN_A].isRising())
+				highGear = !highGear;
+
+			if(btns_operator[XBOX_BTN_BACK].isRising())
 				shooter->modifyRPM(-100);
-			if(btn_Start.isRising())
+			if(btns_operator[XBOX_BTN_BACK].isRising())
 				shooter->modifyRPM(+100);
 
 			if(reverseDisabled)
@@ -170,7 +148,7 @@ public:
 				forward = 0;
 			}
 
-			struct ShiftTankDrive::LogVals driveVals = std->update(forward, rot, gear, dt, logThisTime);
+			struct ShiftTankDrive::LogVals driveVals = std->update(forward, rot, highGear, dt, logThisTime);
 			struct Shooter::LogVals shooterVals = shooter->update(dt, logThisTime);
 			struct Pickup::LogVals pickupVals = pickerUpper->update(dt, logThisTime);
 
@@ -179,7 +157,7 @@ public:
 			{
 				logTicker = 0;
 				SmartDashboard::PutNumber("Total Amps:", pdp.GetTotalCurrent());
-				SmartDashboard::PutNumber("Gear:", gear+1);
+				SmartDashboard::PutBoolean("Gear:", highGear);
 				SmartDashboard::PutNumber("dt:", dt);
 				SmartDashboard::PutBoolean("would pickup ball:", pickerUpper->getSensorIsReady());
 
@@ -201,7 +179,7 @@ public:
 				csvData.shooterRPMSetpoint = shooterVals.RPMSetpoint;
 				csvData.shooterCylinderUp = shooterVals.cylinderUp;
 				csvData.psi = -1;
-				csvData.gear = gear + 1;
+				csvData.gear = highGear ? 2 : 1;
 				csvData.pickupIsUp = pickupVals.pickupIsUp;
 
 				Logger::instance()->logCSV(&csvData);
