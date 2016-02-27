@@ -5,6 +5,7 @@
 #include "EdgeDetection.h"
 #include "Logger.h"
 #include "Shooter.h"
+#include "Lifter.h"
 #include "INIReader.h"
 #include "Pickup.h"
 #include "MyTimer.h"
@@ -22,6 +23,7 @@ class Robot: public SampleRobot
 	ShiftTankDrive *std;
 	Shooter *shooter;
 	Pickup *pickerUpper;
+	Lifter *lifter;
 
 	//INI FILE
 	INIReader iniFile;
@@ -38,6 +40,7 @@ public:
 		std = new ShiftTankDrive(&iniFile);
 		shooter = new Shooter(&iniFile);
 		pickerUpper = new Pickup(&iniFile);
+		lifter = new Lifter(&iniFile);
 
 		compressor = new Compressor(iniFile.getInt("Pneumatics", "compressorPCMID"));
 		compressor->SetClosedLoopControl(true);
@@ -107,10 +110,12 @@ public:
 			if(btns_driver[XBOX_BTN_A].isRising() && btns_driver[XBOX_BTN_LB].getState())
 					shooter->shoot();
 			if(btns_operator[XBOX_BTN_A].isRising())
+			{
 				if(btns_operator[XBOX_BTN_LB].getState())
 					shooter->toggleWheels();
 				else
 					shooter->shoot();
+			}
 
 			//REVERSE MODE
 			if(btns_driver[XBOX_BTN_B].isRising())
@@ -132,6 +137,24 @@ public:
 				shooter->modifyRPM(-100);
 			if(btns_operator[XBOX_BTN_BACK].isRising())
 				shooter->modifyRPM(+100);
+
+			//LIFTER
+			if(controller_driver.GetPOV(0)==0)
+			{
+				if(btns_driver[XBOX_BTN_LB])
+					lifter->setPotition(Lifter::Position::TOP);
+				else
+					lifter->setPotition(Lifter::Position::MIDDLE);
+			} else if(controller_driver.GetPOV(0)==180)
+				lifter->setPotition(Lifter::Position::BOTTOM);
+			if(controller_operator.GetPOV(0)==0)
+			{
+				if(btns_operator[XBOX_BTN_LB])
+					lifter->setPotition(Lifter::Position::TOP);
+				else
+					lifter->setPotition(Lifter::Position::MIDDLE);
+			} else if(controller_operator.GetPOV(0)==180)
+				lifter->setPotition(Lifter::Position::BOTTOM);
 
 			if(reverseDisabled)
 			{
