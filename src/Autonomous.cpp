@@ -14,27 +14,27 @@ std(std),
 shooter(shooter),
 pickup(pickup)
 {
-	vision_horizOffsetName = iniFile->get("Vision", "vision_horizOffsetName");
-	vision_vertOffsetName = iniFile->get("Vision", "vision_vertOffsetName");
-	vision_flatDistOffsetName = iniFile->get("Vision", "vision_flatDistOffsetName");
-	vision_flatOffsetName = iniFile->get("Vision", "vision_flatOffsetName");
+	vision_horizOffsetName = iniFile->get("Vision", "horizOffsetName");
+	vision_vertOffsetName = iniFile->get("Vision", "vertOffsetName");
+	vision_flatDistName = iniFile->get("Vision", "flatDistName");
+	vision_isFreshName = iniFile->get("Vision", "isFreshName");
 
 	vision_acceptableError = iniFile->getFloat("Vision", "acceptableError");
 }
 
 bool Autonomous::turnToGoal(double dt)
 {
-	double offX = SmartDashboard::GetNumber(vision_horizOffsetName, 0);
-	double offY = SmartDashboard::GetNumber(vision_vertOffsetName, 0);
-	double dist = SmartDashboard::GetNumber(vision_flatDistOffsetName, 0);
-	double stringDist = SmartDashboard::GetNumber(vision_flatOffsetName, 0);
+	struct Autonomous::vision_vals vision_vals = getVisionVals();
 
-	std->update(0,-offX, 1, dt, false);
+	if(vision_vals.vision_isFresh)
+		std->update(0, -vision_vals.vision_horizOffset, 1, dt, false);
+	else
+		std->update(0, 0, 1, dt, false);
 
-	return (offX < vision_acceptableError) && (offX > -vision_acceptableError);
+	return (vision_vals.vision_horizOffset < vision_acceptableError) && (vision_vals.vision_horizOffset > -vision_acceptableError);
 }
 
-bool Autonomous::shoot(double dt, double currTime)
+void Autonomous::update(double dt)
 {
 }
 
@@ -45,4 +45,15 @@ bool Autonomous::runAuton(double dt)
 void Autonomous::initAuton()
 {
 
+}
+
+struct Autonomous::vision_vals Autonomous::getVisionVals()
+{
+	struct Autonomous::vision_vals ret;
+	ret.vision_horizOffset = SmartDashboard::GetNumber(vision_horizOffsetName,0);
+	ret.vision_vertOffset = SmartDashboard::GetNumber(vision_vertOffsetName, 0);
+	ret.vision_flatDist = SmartDashboard::GetNumber(vision_flatDistName, 0);
+	ret.vision_isFresh = SmartDashboard::GetNumber(vision_isFreshName, false);
+
+	return ret;
 }

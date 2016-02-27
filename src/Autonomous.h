@@ -18,7 +18,7 @@ public:
 	Autonomous(ShiftTankDrive *std, Shooter *shooter, Pickup *pickup, INIReader *iniFile);
 
 	bool turnToGoal(double dt);
-	bool shoot(double dt, double currTime);
+	void update(double dt);
 
 	bool runAuton(double dt);
 	void initAuton();
@@ -30,8 +30,17 @@ private:
 
 	std::string vision_horizOffsetName;
 	std::string vision_vertOffsetName;
-	std::string vision_flatDistOffsetName;
-	std::string vision_flatOffsetName;
+	std::string vision_flatDistName;
+	std::string vision_isFreshName;
+
+	struct vision_vals {
+		float vision_horizOffset;
+		float vision_vertOffset;
+		float vision_flatDist;
+		bool vision_isFresh;
+	};
+
+	struct vision_vals getVisionVals();
 
 	double vision_acceptableError;
 };
