@@ -74,7 +74,7 @@ public:
 		EdgeDetection btns_driver[10];
 		EdgeDetection btns_operator[10];
 
-		bool reverseMode = false;
+		bool reverseMode = true;
 		double reverseDisabledCounter;
 		bool reverseDisabled = false;
 
@@ -92,10 +92,10 @@ public:
 				logThisTime = true;
 			}
 
-			for(int i=0; i < (int)sizeof(btns_driver); i++)
+			for(int i=0; i < 10; i++)
 				btns_driver[i].update(controller_driver.GetRawButton(i+1));
-			for(int i=0; i < (int)sizeof(btns_operator); i++)
-				btns_driver[i].update(controller_operator.GetRawButton(i+1));
+			for(int i=0; i < 10; i++)
+				btns_operator[i].update(controller_operator.GetRawButton(i+1));
 
 			float forward = deadband(-controller_driver.GetRawAxis(1));
 			float rot = deadband(-controller_driver.GetRawAxis(4));
@@ -132,7 +132,7 @@ public:
 
 			if(btns_operator[XBOX_BTN_BACK].isRising())
 				shooter->modifyRPM(-100);
-			if(btns_operator[XBOX_BTN_BACK].isRising())
+			if(btns_operator[XBOX_BTN_START].isRising())
 				shooter->modifyRPM(+100);
 
 			if(reverseDisabled)

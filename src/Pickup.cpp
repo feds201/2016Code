@@ -28,6 +28,7 @@ Pickup::Pickup(INIReader *iniFile)
 
 struct Pickup::LogVals Pickup::update(double dt, bool logThisTime)
 {
+	SmartDashboard::PutNumber("pickup dt", dt);
 	if(countdown > 0)
 	{
 		countdown -= dt;
@@ -39,6 +40,7 @@ struct Pickup::LogVals Pickup::update(double dt, bool logThisTime)
 	}
 	struct Pickup::LogVals ret;
 	ret.pickupIsUp = pickupIsUp;
+	SmartDashboard::PutBoolean("pickupisup", pickupIsUp);
 	return ret;
 }
 
@@ -64,13 +66,13 @@ void Pickup::togglePickup()
 
 void Pickup::pickupOnce()
 {
+	if(!pickupReady)
+		return;
 	if(!pickupIsUp)
 	{
 		setUp();
 		return;
 	}
-	if(!pickupReady)
-		return;
 	setDown();
 	countdown = downTime;
 	pickupReady = false;
@@ -78,7 +80,7 @@ void Pickup::pickupOnce()
 
 void Pickup::pickupOnceSensored()
 {
-	if(!pickupIsUp)
+	if(!pickupIsUp && pickupReady)
 	{
 		setUp();
 		return;
