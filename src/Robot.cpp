@@ -92,9 +92,9 @@ public:
 				logThisTime = true;
 			}
 
-			for(int i=0; i < sizeof(btns_driver); i++)
+			for(int i=0; i < (int)sizeof(btns_driver); i++)
 				btns_driver[i].update(controller_driver.GetRawButton(i+1));
-			for(int i=0; i < sizeof(btns_operator); i++)
+			for(int i=0; i < (int)sizeof(btns_operator); i++)
 				btns_driver[i].update(controller_operator.GetRawButton(i+1));
 
 			float forward = deadband(-controller_driver.GetRawAxis(1));
@@ -107,10 +107,12 @@ public:
 			if(btns_driver[XBOX_BTN_A].isRising() && btns_driver[XBOX_BTN_LB].getState())
 					shooter->shoot();
 			if(btns_operator[XBOX_BTN_A].isRising())
+			{
 				if(btns_operator[XBOX_BTN_LB].getState())
 					shooter->toggleWheels();
 				else
 					shooter->shoot();
+			}
 
 			//REVERSE MODE
 			if(btns_driver[XBOX_BTN_B].isRising())
