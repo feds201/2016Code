@@ -36,6 +36,9 @@ private:
 	bool lastGear = false;
 	double shiftTimer = 0;
 
+	float outputMux = 1000;
+	float accumMax = 1000;
+
 	int numShifts = 0;
 	EdgeDetection shiftEdge;
 

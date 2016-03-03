@@ -31,11 +31,32 @@ ShiftTankDrive::ShiftTankDrive(INIReader *iniFile)
 			iniFile->getInt("Drive", "shiftSolenoidChannelA"),
 			iniFile->getInt("Drive", "shiftSolenoidChannelB"));
 
-	motors_left->SetControlMode(CANTalon::ControlMode::kVoltage);
+	motors_left->SetControlMode(CANTalon::ControlMode::kSpeed);
 	motors_left->SetVoltageRampRate(iniFile->getFloat("Drive", "rampRate"));
 
-	motors_right->SetControlMode(CANTalon::ControlMode::kVoltage);
+	motors_right->SetControlMode(CANTalon::ControlMode::kSpeed);
 	motors_right->SetVoltageRampRate(iniFile->getFloat("Drive", "rampRate"));
+
+	motors_left->SetSensorDirection(iniFile->getBool("Drive", "reverseLeftEnc"));
+	motors_right->SetSensorDirection(iniFile->getBool("Drive", "reverseRightEnc"));
+	motors_left->SetIzone(iniFile->getBool("Drive", "iZone"));
+	motors_right->SetIzone(iniFile->getBool("Drive", "iZone"));
+
+	motors_left->SetPID(
+			iniFile->getFloat("Drive", "P"),
+			iniFile->getFloat("Drive", "I"),
+			iniFile->getFloat("Drive", "D"),
+			iniFile->getFloat("Drive", "F")
+			);
+	motors_right->SetPID(
+			iniFile->getFloat("Drive", "P"),
+			iniFile->getFloat("Drive", "I"),
+			iniFile->getFloat("Drive", "D"),
+			iniFile->getFloat("Drive", "F")
+			);
+
+	outputMux = iniFile->getFloat("Drive", "mux");
+	accumMax =  iniFile->getFloat("Drive", "iMax");
 }
 
 ShiftTankDrive::~ShiftTankDrive()
@@ -66,6 +87,17 @@ struct ShiftTankDrive::LogVals ShiftTankDrive::update(float forward, float turn,
 		Logger::instance()->logInfo(msg);
 	}
 
+	float ia = motors_left->GetIaccum();
+	if(ia > accumMax)
+		motors_left->ClearIaccum();
+	else if(ia < -accumMax)
+		motors_left->ClearIaccum();
+	ia = motors_right->GetIaccum();
+	if(ia > accumMax)
+		motors_right->ClearIaccum();
+	else if(ia < -accumMax)
+		motors_right->ClearIaccum();
+
 
 	if(setHighGear != lastGear)
 	{
@@ -89,8 +121,8 @@ struct ShiftTankDrive::LogVals ShiftTankDrive::update(float forward, float turn,
 	}
 
 
-	l = l*percent*12;
-	r = r*percent*12;
+	l = l*percent*outputMux;
+	r = r*percent*outputMux;
 
 	enable();
 
@@ -106,8 +138,8 @@ struct ShiftTankDrive::LogVals ShiftTankDrive::update(float forward, float turn,
 		ret.values[2]=r;
 		ret.values[3]=r;
 
-		SmartDashboard::PutNumber("getencvelL", motors_left->GetEncVel());
-		SmartDashboard::PutNumber("getencvelR", motors_right->GetEncVel());
+		SmartDashboard::PutNumber("getencvelL", motors_left->GetSpeed());
+		SmartDashboard::PutNumber("getencvelR", motors_right->GetSpeed());
 	}
 	return ret;
 }
