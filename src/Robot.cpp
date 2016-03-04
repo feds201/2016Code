@@ -114,6 +114,12 @@ public:
 					shooter->shoot();
 			}
 
+			//TOGGLE PID MODE
+			if(btns_driver[XBOX_BTN_RB].isRising() || btns_operator[XBOX_BTN_RB].isRising())
+			{
+				std->togglePIDMode();
+			}
+
 			//REVERSE MODE
 			if(btns_driver[XBOX_BTN_B].isRising())
 			{

@@ -39,24 +39,45 @@ ShiftTankDrive::ShiftTankDrive(INIReader *iniFile)
 
 	motors_left->SetSensorDirection(iniFile->getBool("Drive", "reverseLeftEnc"));
 	motors_right->SetSensorDirection(iniFile->getBool("Drive", "reverseRightEnc"));
-	motors_left->SetIzone(iniFile->getBool("Drive", "iZone"));
-	motors_right->SetIzone(iniFile->getBool("Drive", "iZone"));
 
-	motors_left->SetPID(
-			iniFile->getFloat("Drive", "P"),
-			iniFile->getFloat("Drive", "I"),
-			iniFile->getFloat("Drive", "D"),
-			iniFile->getFloat("Drive", "F")
-			);
-	motors_right->SetPID(
-			iniFile->getFloat("Drive", "P"),
-			iniFile->getFloat("Drive", "I"),
-			iniFile->getFloat("Drive", "D"),
-			iniFile->getFloat("Drive", "F")
-			);
+	P= iniFile->getFloat("Drive", "P");
+	I= iniFile->getFloat("Drive", "I");
+	D= iniFile->getFloat("Drive", "D");
+	F= iniFile->getFloat("Drive", "F");
+	iZone = iniFile->getFloat("Drive", "iZone");
+
+	motors_left->SetIzone(iZone);
+	motors_right->SetIzone(iZone);
+
+	motors_left->SetPID(P, I, D, F);
+	motors_right->SetPID(P, I, D, F);
 
 	outputMux = iniFile->getFloat("Drive", "mux");
 	accumMax =  iniFile->getFloat("Drive", "iMax");
+}
+
+void ShiftTankDrive::togglePIDMode()
+{
+	if(PIDMode)
+	{
+		motors_left->SetControlMode(CANTalon::ControlMode::kVoltage);
+		motors_right->SetControlMode(CANTalon::ControlMode::kVoltage);
+
+		PIDMode = false;
+	} else {
+		motors_left->SetControlMode(CANTalon::ControlMode::kSpeed);
+		motors_right->SetControlMode(CANTalon::ControlMode::kSpeed);
+
+		motors_left->SetIzone(iZone);
+		motors_right->SetIzone(iZone);
+
+		motors_left->SetPID(P, I, D, F);
+		motors_right->SetPID(P, I, D, F);
+
+		PIDMode = true;
+	}
+
+	SmartDashboard::PutBoolean("*** PID MODE: ***", PIDMode);
 }
 
 ShiftTankDrive::~ShiftTankDrive()
@@ -121,8 +142,23 @@ struct ShiftTankDrive::LogVals ShiftTankDrive::update(float forward, float turn,
 	}
 
 
-	l = l*percent*outputMux;
-	r = r*percent*outputMux;
+	l = l*percent;
+	r = r*percent;
+
+	if(PIDMode)
+	{
+		l *= outputMux;
+		r *= outputMux;
+
+		if(setHighGear)
+		{
+			l *= 2.65;
+			r *= 2.65;
+		}
+	} else {
+		l *= 12;
+		r *= 12;
+	}
 
 	enable();
 

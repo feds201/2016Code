@@ -25,6 +25,8 @@ public:
 	struct ShiftTankDrive::LogVals update(float forward, float turn, bool setHighGear, double dt, bool logThisTime);
 	void setPercent(float p);
 
+	void togglePIDMode();
+
 	void enable();
 	void disable();
 
@@ -37,7 +39,10 @@ private:
 	double shiftTimer = 0;
 
 	float outputMux = 1000;
-	float accumMax = 1000;
+
+	bool PIDMode = true;
+
+	float P, I, D, F, iZone, accumMax;
 
 	int numShifts = 0;
 	EdgeDetection shiftEdge;
