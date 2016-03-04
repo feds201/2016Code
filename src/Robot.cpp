@@ -24,13 +24,10 @@ class Robot: public SampleRobot
 	ShiftTankDrive *std;
 	Shooter *shooter;
 	Pickup *pickerUpper;
-<<<<<<< HEAD
 	Auton *auton;
 
 	SendableChooser *chooser = 0;
-=======
 	Lifter *lifter;
->>>>>>> lifter
 
 	//INI FILE
 	INIReader iniFile;
@@ -69,6 +66,7 @@ public:
 		chooser = new SendableChooser();
 		chooser->AddDefault(none, (void*)&none);
 		chooser->AddObject(drivefwd, (void*)&drivefwd);
+		chooser->AddObject(none, (void*)&none);
 		SmartDashboard::PutData("Auto Modes", chooser);
 	}
 
@@ -142,21 +140,30 @@ public:
 				else
 					shooter->shoot();
 			}
-<<<<<<< HEAD
 
 			//TOGGLE PID MODE
 			if(btns_driver[XBOX_BTN_RB].isRising() || btns_operator[XBOX_BTN_RB].isRising())
 			{
 				std->togglePIDMode();
 			}
-=======
->>>>>>> lifter
 
 			//REVERSE MODE
 			if(btns_driver[XBOX_BTN_B].isRising())
 			{
 				reverseDisabled = true;
 				reverseDisabledCounter = -.2;
+			}
+
+			//LIFTER MANUAL
+			if(lifter->isManualMode())
+			{
+				if(btns_operator[XBOX_BTN_LB].getState())
+				{
+					SmartDashboard::PutNumber("Lifter PWM", controller_operator.GetRawAxis(2) - controller_operator.GetRawAxis(3));
+					lifter->run(controller_operator.GetRawAxis(2) - controller_operator.GetRawAxis(3));
+				} else {
+					lifter->stop();
+				}
 			}
 
 			if(btns_operator[XBOX_BTN_X].getState() && !btns_operator[XBOX_BTN_LB].getState())
@@ -174,22 +181,25 @@ public:
 				shooter->modifyRPM(+100);
 
 			//LIFTER
-			if(controller_driver.GetPOV(0)==0)
+			if(lifter->isManualMode() == false)
 			{
-				if(btns_driver[XBOX_BTN_LB])
-					lifter->setPotition(Lifter::Position::TOP);
-				else
-					lifter->setPotition(Lifter::Position::MIDDLE);
-			} else if(controller_driver.GetPOV(0)==180)
-				lifter->setPotition(Lifter::Position::BOTTOM);
-			if(controller_operator.GetPOV(0)==0)
-			{
-				if(btns_operator[XBOX_BTN_LB])
-					lifter->setPotition(Lifter::Position::TOP);
-				else
-					lifter->setPotition(Lifter::Position::MIDDLE);
-			} else if(controller_operator.GetPOV(0)==180)
-				lifter->setPotition(Lifter::Position::BOTTOM);
+				if(controller_driver.GetPOV(0)==0)
+				{
+					if(btns_driver[XBOX_BTN_LB].getState())
+						lifter->setPotition(Lifter::Position::TOP);
+					else
+						lifter->setPotition(Lifter::Position::MIDDLE);
+				} else if(controller_driver.GetPOV(0)==180)
+					lifter->setPotition(Lifter::Position::BOTTOM);
+				if(controller_operator.GetPOV(0)==0)
+				{
+					if(btns_operator[XBOX_BTN_LB].getState())
+						lifter->setPotition(Lifter::Position::TOP);
+					else
+						lifter->setPotition(Lifter::Position::MIDDLE);
+				} else if(controller_operator.GetPOV(0)==180)
+					lifter->setPotition(Lifter::Position::BOTTOM);
+			}
 
 			if(reverseDisabled)
 			{

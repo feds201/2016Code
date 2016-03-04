@@ -38,12 +38,12 @@ Logger::Logger() {
 			<< "driveValues2" << ','
 			<< "driveValues3" << ','
 			<< "shooterRPMActualL" << ','
-			<< "shooterRPMActualR" << ','
-			<< "shooterRPMSetpoint" << ','
-			<< "shooterCylinderUp" << ','
-			<< "pickupIsUp" << ','
-			<< "psi" << ','
-			<< "gear" << std::endl;
+			<< "shooterRPMActualR" << std::endl;//','
+//			<< "shooterRPMSetpoint" << ','
+//			<< "shooterCylinderUp" << ','
+//			<< "pickupIsUp" << ','
+//			<< "psi" << ','
+//			<< "gear" << std::endl;
 }
 
 void Logger::logInfo(const char *msg, ... )
@@ -89,12 +89,12 @@ void Logger::logCSV(struct CSVVals *data)
 			<< data->driveSetpoints[2] << ','
 			<< data->driveSetpoints[3] << ','
 			<< data->shooterRPMActualL << ','
-			<< data->shooterRPMActualR << ','
-			<< data->shooterRPMSetpoint << ','
-			<< (data->shooterCylinderUp ? 1 : 0) << ','
-			<< (data->pickupIsUp ? 1 : 0) << ','
-			<< data->psi << ','
-			<< data->gear << std::endl;
+			<< data->shooterRPMActualR << std::endl;//','
+//			<< data->shooterRPMSetpoint << ','
+//			<< (data->shooterCylinderUp ? 1 : 0) << ','
+//			<< (data->pickupIsUp ? 1 : 0) << ','
+//			<< data->psi << ','
+//			<< data->gear << std::endl;
 	save();
 }
 

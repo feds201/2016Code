@@ -9,15 +9,34 @@
 
 Lifter::Lifter(INIReader *iniFile)
 {
-	motor = new SparkMotorController(iniFile->getInt("Lifter", "MotorID"),
-			iniFile->getBool("Lifter", "MotorReversed"));
-	motorSpeed = iniFile->getFloat("Lifter", "MotorPercentage");
+	motor = new Spark(iniFile->getInt("Lifter", "motorID"));
+	reversed = iniFile->getBool("Lifter", "motorReversed");
+	motorSpeed = iniFile->getFloat("Lifter", "motorPercentage");
+
+	if(reversed)
+		motorSpeed = -motorSpeed;
 
 	lowerLimit = new DigitalInput(iniFile->getFloat("Lifter", "lowerLimitID"));
 	middleLimit = new DigitalInput(iniFile->getFloat("Lifter", "middleLimitID"));
 	topLimit = new DigitalInput(iniFile->getFloat("Lifter", "topLimitID"));
+
+	motor->SetSafetyEnabled(false);
 }
 
+void Lifter::run(float val)
+{
+	motor->Set(val);
+}
+
+void Lifter::stop()
+{
+	//motor->Set(0);
+}
+
+bool Lifter::isManualMode()
+{
+	return true;
+}
 
 void Lifter::update(double dt)
 {

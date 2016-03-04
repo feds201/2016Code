@@ -21,11 +21,17 @@ public:
 	void setPotition(enum Position targetPosition);
 	enum Position getPosition();
 
+	bool isManualMode();
+	void run(float val);
+	void stop();
+
 private:
+	bool reversed = false;
+
 	enum Position lastKnownPosition = BOTTOM;
 	enum Position targetPosition = BOTTOM;
 
-	SparkMotorController *motor;
+	Spark *motor;
 	float motorSpeed;
 
 	DigitalInput *lowerLimit;

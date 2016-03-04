@@ -43,8 +43,10 @@ private:
 	int autonMode = 0;
 	MyTimer timer;
 
+	float drivefwd_speed = -.7;
+
 	//drivefwd
-	float driveFwdTime;
+	float drivefwd_time;
 
 	struct vision_vals {
 		float vision_horizOffset;

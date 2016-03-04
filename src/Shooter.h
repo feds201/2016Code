@@ -19,7 +19,7 @@ class Shooter {
 
 	double shooterPusherCountdown=0;
 	double shooterPusherTime = 0;
-	float rpm=6000;
+	float rpm=8100;
 	int encCodesPerRevNotQuadrature;
 
 	bool cylinderUp = false;

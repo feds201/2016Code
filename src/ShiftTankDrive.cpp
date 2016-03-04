@@ -150,6 +150,16 @@ struct ShiftTankDrive::LogVals ShiftTankDrive::update(float forward, float turn,
 		l *= outputMux;
 		r *= outputMux;
 
+		float max = l;
+		if(r > l)
+			max = r;
+
+		if(max > 4000.0f)
+		{
+			l *= 4000.0f / max;
+			r *= 4000.0f / max;
+		}
+
 		if(setHighGear)
 		{
 			l *= 2.65;
