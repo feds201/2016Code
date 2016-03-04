@@ -46,7 +46,7 @@ bool Auton::runAuton(double dt)
 	return false;
 }
 
-void Auton::initAuton()
+void Auton::initAuton(std::string mode)
 {
 
 }

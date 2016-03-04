@@ -26,7 +26,7 @@ public:
 	void update(double dt);
 
 	bool runAuton(double dt);
-	void initAuton();
+	void initAuton(std::string mode);
 
 private:
 	ShiftTankDrive *std;

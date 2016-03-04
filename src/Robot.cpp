@@ -25,6 +25,8 @@ class Robot: public SampleRobot
 	Pickup *pickerUpper;
 	Auton *auton;
 
+	SendableChooser *chooser = 0;
+
 	//INI FILE
 	INIReader iniFile;
 
@@ -53,7 +55,15 @@ public:
 
 	void RobotInit()
 	{
-		//SmartDashboard::PutString("Robot Name:", iniFile.get("Robot", "name"));
+		SmartDashboard::PutString("Robot Name:", iniFile.get("Robot", "name"));
+
+		std::string none = "none";
+		std::string drivefwd = "none";
+
+		chooser = new SendableChooser();
+		chooser->AddDefault(none, (void*)&none);
+		chooser->AddObject(drivefwd, (void*)&drivefwd);
+		SmartDashboard::PutData("Auto Modes", chooser);
 	}
 
 	float deadband(float f)
@@ -71,6 +81,15 @@ public:
 
 	void Autonomous()
 	{
+		std::string autoSelected = *((std::string*)chooser->GetSelected());
+		auton->initAuton(autoSelected);
+
+		while (IsAutonomous() && IsEnabled())
+		{
+			double dt = timer.getDt();
+
+			auton->runAuton(dt);
+		}
 	}
 
 	void OperatorControl()
@@ -168,6 +187,7 @@ public:
 				driveVals = std->update(forward, rot, highGear, dt, logThisTime);
 			struct Shooter::LogVals shooterVals = shooter->update(dt, logThisTime);
 			struct Pickup::LogVals pickupVals = pickerUpper->update(dt, logThisTime);
+			auton->update(dt);
 
 			//Logging
 			if(logThisTime)
