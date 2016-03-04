@@ -10,6 +10,7 @@ MyTimer::MyTimer()
 {
 	gettimeofday(&startTime, 0);
 	lastTime = startTime;
+	diffTime = startTime;
 }
 
 double MyTimer::getDt()
@@ -33,5 +34,17 @@ void MyTimer::reset()
 {
 	gettimeofday(&startTime, 0);
 	lastTime = startTime;
+}
+
+void MyTimer::diffBegin()
+{
+	gettimeofday(&diffTime, 0);
+}
+
+double MyTimer::getDiff()
+{
+	struct timeval thisTime;
+	gettimeofday(&thisTime, 0);
+	return (thisTime.tv_sec-diffTime.tv_sec)+(thisTime.tv_usec-diffTime.tv_usec)/1000000.0;
 }
 

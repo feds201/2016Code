@@ -20,6 +20,8 @@ pickup(pickup)
 
 	vision_acceptableError = iniFile->getFloat("Vision", "acceptableError");
 	vision_turnMux = iniFile->getFloat("Vision", "turnMux");
+
+	driveFwdTime = iniFile->getFloat("Vision", "driveFwdTime");
 }
 
 struct Auton::AutonVals Auton::turnToGoal(double dt, bool logThisTime)
@@ -43,12 +45,44 @@ void Auton::update(double dt)
 
 bool Auton::runAuton(double dt)
 {
-	return false;
+	switch(autonMode)
+	{
+	case 0://none
+	{
+		return true;
+		break;
+	}
+	case 1://drivefwd
+	{
+		if(timer.getTotalTime() < driveFwdTime)
+		{
+			std->update(.8, 0, false, dt, false);
+			return false;
+		} else {
+			return true;
+		}
+		break;
+	}
+	}
+	return true;
 }
 
 void Auton::initAuton(std::string mode)
 {
+	switch(mode)
+	{
+	case "none":
+		autonMode = 0;
+		break;
+	case "drivefwd":
+		autonMode = 1;
+		break;
+	default:
+		autonMode = 0;
+		break;
+	}
 
+	timer.reset();
 }
 
 struct Auton::vision_vals Auton::getVisionVals()

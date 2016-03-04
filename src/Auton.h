@@ -12,6 +12,7 @@
 #include "Shooter.h"
 #include "Pickup.h"
 #include "INIReader.h"
+#include "MyTimer.h"
 
 class Auton {
 public:
@@ -38,6 +39,12 @@ private:
 	std::string vision_flatDistName;
 	std::string vision_isFreshName;
 	float vision_turnMux;
+
+	int autonMode = 0;
+	MyTimer timer;
+
+	//drivefwd
+	float driveFwdTime;
 
 	struct vision_vals {
 		float vision_horizOffset;
