@@ -1,3 +1,4 @@
+#include <Auton.h>
 #include "WPILib.h"
 #include "MotorControllers.h"
 #include "SolenoidControllers.h"
@@ -22,6 +23,7 @@ class Robot: public SampleRobot
 	ShiftTankDrive *std;
 	Shooter *shooter;
 	Pickup *pickerUpper;
+	Auton *auton;
 
 	//INI FILE
 	INIReader iniFile;
@@ -38,6 +40,8 @@ public:
 		std = new ShiftTankDrive(&iniFile);
 		shooter = new Shooter(&iniFile);
 		pickerUpper = new Pickup(&iniFile);
+
+		auton = new Auton(std, shooter, pickerUpper, &iniFile);
 
 		compressor = new Compressor(iniFile.getInt("Pneumatics", "compressorPCMID"));
 		compressor->SetClosedLoopControl(true);
@@ -156,7 +160,12 @@ public:
 				forward = 0;
 			}
 
-			struct ShiftTankDrive::LogVals driveVals = std->update(forward, rot, highGear, dt, logThisTime);
+			struct ShiftTankDrive::LogVals driveVals;
+			//TURN TO GOAL
+			if(btns_operator[XBOX_BTN_Y].getState())
+				driveVals = auton->turnToGoal(dt, logThisTime).driveVals;
+			else
+				driveVals = std->update(forward, rot, highGear, dt, logThisTime);
 			struct Shooter::LogVals shooterVals = shooter->update(dt, logThisTime);
 			struct Pickup::LogVals pickupVals = pickerUpper->update(dt, logThisTime);
 

@@ -5,19 +5,24 @@
  *      Author: feds
  */
 
-#ifndef SRC_AUTONOMOUS_H_
-#define SRC_AUTONOMOUS_H_
+#ifndef AUTONOMOUS_H_
+#define AUTONOMOUS_H_
 
 #include "ShiftTankDrive.h"
 #include "Shooter.h"
 #include "Pickup.h"
 #include "INIReader.h"
 
-class Autonomous {
+class Auton {
 public:
-	Autonomous(ShiftTankDrive *std, Shooter *shooter, Pickup *pickup, INIReader *iniFile);
+	struct AutonVals {
+		ShiftTankDrive::LogVals driveVals;
+		bool turnToGoalInError;
+	};
 
-	bool turnToGoal(double dt);
+	Auton(ShiftTankDrive *std, Shooter *shooter, Pickup *pickup, INIReader *iniFile);
+
+	struct Auton::AutonVals turnToGoal(double dt, bool logThisTime);
 	void update(double dt);
 
 	bool runAuton(double dt);
@@ -32,6 +37,7 @@ private:
 	std::string vision_vertOffsetName;
 	std::string vision_flatDistName;
 	std::string vision_isFreshName;
+	float vision_turnMux;
 
 	struct vision_vals {
 		float vision_horizOffset;
