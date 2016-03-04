@@ -6,6 +6,7 @@
 #include "EdgeDetection.h"
 #include "Logger.h"
 #include "Shooter.h"
+#include "Lifter.h"
 #include "INIReader.h"
 #include "Pickup.h"
 #include "MyTimer.h"
@@ -23,9 +24,13 @@ class Robot: public SampleRobot
 	ShiftTankDrive *std;
 	Shooter *shooter;
 	Pickup *pickerUpper;
+<<<<<<< HEAD
 	Auton *auton;
 
 	SendableChooser *chooser = 0;
+=======
+	Lifter *lifter;
+>>>>>>> lifter
 
 	//INI FILE
 	INIReader iniFile;
@@ -42,6 +47,7 @@ public:
 		std = new ShiftTankDrive(&iniFile);
 		shooter = new Shooter(&iniFile);
 		pickerUpper = new Pickup(&iniFile);
+		lifter = new Lifter(&iniFile);
 
 		auton = new Auton(std, shooter, pickerUpper, &iniFile);
 
@@ -136,12 +142,15 @@ public:
 				else
 					shooter->shoot();
 			}
+<<<<<<< HEAD
 
 			//TOGGLE PID MODE
 			if(btns_driver[XBOX_BTN_RB].isRising() || btns_operator[XBOX_BTN_RB].isRising())
 			{
 				std->togglePIDMode();
 			}
+=======
+>>>>>>> lifter
 
 			//REVERSE MODE
 			if(btns_driver[XBOX_BTN_B].isRising())
@@ -163,6 +172,24 @@ public:
 				shooter->modifyRPM(-100);
 			if(btns_operator[XBOX_BTN_START].isRising())
 				shooter->modifyRPM(+100);
+
+			//LIFTER
+			if(controller_driver.GetPOV(0)==0)
+			{
+				if(btns_driver[XBOX_BTN_LB])
+					lifter->setPotition(Lifter::Position::TOP);
+				else
+					lifter->setPotition(Lifter::Position::MIDDLE);
+			} else if(controller_driver.GetPOV(0)==180)
+				lifter->setPotition(Lifter::Position::BOTTOM);
+			if(controller_operator.GetPOV(0)==0)
+			{
+				if(btns_operator[XBOX_BTN_LB])
+					lifter->setPotition(Lifter::Position::TOP);
+				else
+					lifter->setPotition(Lifter::Position::MIDDLE);
+			} else if(controller_operator.GetPOV(0)==180)
+				lifter->setPotition(Lifter::Position::BOTTOM);
 
 			if(reverseDisabled)
 			{
