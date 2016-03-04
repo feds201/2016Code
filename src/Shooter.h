@@ -24,6 +24,9 @@ class Shooter {
 
 	bool cylinderUp = false;
 	bool running = false;
+	bool shootNeedsRPM = false;
+
+	float acceptableRPMError = 0.05;
 
 public:
 	struct LogVals {
@@ -35,6 +38,8 @@ public:
 
 	Shooter(INIReader *iniFile);
 	void shoot();
+	void setUp();
+	void setDown();
 
 	float modifyRPM(float delta);
 	float setRPM(float rpm);
@@ -42,6 +47,8 @@ public:
 	void start();
 	void stop();
 	void toggleWheels();
+
+	bool isShooterReady();
 
 	struct Shooter::LogVals update(double dt, bool logThisTime);
 };
