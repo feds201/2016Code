@@ -19,8 +19,6 @@ Shooter::Shooter(INIReader *iniFile)
 
 	shooterPusherTime = iniFile->getFloat("Shooter", "shooterPusherTime");
 
-	acceptableRPMError = iniFile->getFloat("Shooter", "acceptableRPMError");
-
 	encCodesPerRevNotQuadrature = iniFile->getInt("Shooter", "encCodesPerRev");
 
 	motorL->SetControlMode(CANTalon::ControlMode::kSpeed);
@@ -38,27 +36,9 @@ Shooter::Shooter(INIReader *iniFile)
 
 void Shooter::shoot()
 {
-	if(shooterPusherCountdown<=0)
-	{
-		shootNeedsRPM = true;
-		if(isShooterReady())
-		{
-			setUp();
-			shooterPusherCountdown=shooterPusherTime;
-		}
-	}
-}
-
-void Shooter::setUp()
-{
 	this->cylinderUp = true;
 	solenoidTrigger->Set(DoubleSolenoid::Value::kForward);
-}
-
-void Shooter::setDown()
-{
-	this->cylinderUp = false;
-	solenoidTrigger->Set(DoubleSolenoid::Value::kReverse);
+	shooterPusherCountdown=shooterPusherTime;
 }
 
 float Shooter::modifyRPM(float delta)
@@ -82,13 +62,13 @@ struct Shooter::LogVals Shooter::update(double dt, bool logThisTime)
 		shooterPusherCountdown -= dt;
 		if(shooterPusherCountdown <= 0)
 		{
-			setDown();
-			shootNeedsRPM = false;
+			this->cylinderUp = false;
+			solenoidTrigger->Set(DoubleSolenoid::Value::kReverse);
 		}
 	}
 
 	float setpoint = rpm;
-	if(running || shootNeedsRPM)
+	if(running)
 	{
 		setpoint = rpm * ((4.0*(double)encCodesPerRevNotQuadrature) / (600.0));
 	} else {
@@ -129,15 +109,4 @@ void Shooter::stop()
 void Shooter::toggleWheels()
 {
 	running = !running;
-}
-
-bool Shooter::isShooterReady()
-{
-	float speedL = motorL->GetSpeed() * (600.0 / ((double)encCodesPerRevNotQuadrature*4.0));
-	float speedR = motorR->GetSpeed() * (600.0 / ((double)encCodesPerRevNotQuadrature*4.0));
-
-	return
-			speedL < rpm + acceptableRPMError && speedL > rpm - acceptableRPMError &&
-			speedR < rpm + acceptableRPMError && speedL > rpm - acceptableRPMError;
-
 }
