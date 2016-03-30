@@ -19,15 +19,19 @@ public:
 	struct CSVVals {
 		double voltage;
 		double totalCurrent;
+
 		double driveSetpoints[4];
+		double driveSpeeds[4];
 		double driveCurrents[4];
+
 		double shooterRPMActualL;
 		double shooterRPMActualR;
 		double shooterRPMSetpoint;
+
+		double lifterCurrent;
+
 		bool shooterCylinderUp;
 		bool pickupIsUp;
-		double psi;
-		double gear;
 	};
 
 	virtual ~Logger();

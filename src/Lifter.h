@@ -10,33 +10,22 @@
 
 #include "INIReader.h"
 #include "MotorControllers.h"
+#include "SolenoidControllers.h"
 
 class Lifter {
 public:
-	enum Position {BOTTOM, MIDDLE, TOP};
-
 	Lifter(INIReader *iniFile);
-	void update(double dt);
 
-	void setPotition(enum Position targetPosition);
-	enum Position getPosition();
-
-	bool isManualMode();
 	void run(float val);
 	void stop();
+	void toggleLock();
 
 private:
 	bool reversed = false;
+	bool lockstate = false;
 
-	enum Position lastKnownPosition = BOTTOM;
-	enum Position targetPosition = BOTTOM;
-
+	DoubleSolenoidController *lock;
 	Spark *motor;
-	float motorSpeed;
-
-	DigitalInput *lowerLimit;
-	DigitalInput *middleLimit;
-	DigitalInput *topLimit;
 };
 
 #endif /* SRC_LIFTER_H_ */

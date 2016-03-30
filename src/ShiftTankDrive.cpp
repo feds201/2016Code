@@ -12,7 +12,6 @@
 #include "Logger.h"
 
 ShiftTankDrive::ShiftTankDrive(INIReader *iniFile)
-:shiftEdge(false)
 {
 	motors_left = new SRXMotorController(
 			iniFile->getInt("Drive", "leftPrimaryMotorID"),
@@ -26,10 +25,6 @@ ShiftTankDrive::ShiftTankDrive(INIReader *iniFile)
 	motors_right->addMotor(
 			iniFile->getInt("Drive", "rightSecondaryMotorID"),
 			iniFile->getBool("Drive", "rightSecondaryMotorReversed"));
-	solenoids = new DoubleSolenoidController(
-			iniFile->getInt("Drive", "PCMID"),
-			iniFile->getInt("Drive", "shiftSolenoidChannelA"),
-			iniFile->getInt("Drive", "shiftSolenoidChannelB"));
 
 	motors_left->SetControlMode(CANTalon::ControlMode::kSpeed);
 	motors_left->SetVoltageRampRate(iniFile->getFloat("Drive", "rampRate"));
@@ -84,10 +79,9 @@ ShiftTankDrive::~ShiftTankDrive()
 {
 	delete motors_right;
 	delete motors_left;
-	delete solenoids;
 }
 
-struct ShiftTankDrive::LogVals ShiftTankDrive::update(float forward, float turn, bool setHighGear, double dt, bool logThisTime)
+struct ShiftTankDrive::LogVals ShiftTankDrive::update(float forward, float turn, double dt, bool logThisTime)
 {
 	float l = forward - turn;
 	float r = forward + turn;
@@ -97,15 +91,6 @@ struct ShiftTankDrive::LogVals ShiftTankDrive::update(float forward, float turn,
 	{
 		l /= m;
 		r /= m;
-	}
-
-	shiftEdge.update(setHighGear);
-	if(shiftEdge.isEdge())
-	{
-		numShifts++;
-		char msg[64];
-		snprintf(msg, sizeof(msg), "shift number: %i", numShifts);
-		Logger::instance()->logInfo(msg);
 	}
 
 	float ia = motors_left->GetIaccum();
@@ -118,29 +103,6 @@ struct ShiftTankDrive::LogVals ShiftTankDrive::update(float forward, float turn,
 		motors_right->ClearIaccum();
 	else if(ia < -accumMax)
 		motors_right->ClearIaccum();
-
-
-	if(setHighGear != lastGear)
-	{
-		switch(setHighGear)
-		{
-		case true:
-			solenoids->set(DoubleSolenoid::Value::kReverse);
-			break;
-		case false:
-			solenoids->set(DoubleSolenoid::Value::kForward);
-			break;
-		default:
-			break;
-		}
-		shiftTimer = 0;
-		lastGear = setHighGear;
-	} else if(shiftTimer < 1) {
-		shiftTimer += dt;
-		if(shiftTimer >= 1)
-			solenoids->set(DoubleSolenoid::Value::kOff);
-	}
-
 
 	l = l*percent;
 	r = r*percent;
@@ -159,12 +121,6 @@ struct ShiftTankDrive::LogVals ShiftTankDrive::update(float forward, float turn,
 			l *= 4000.0f / max;
 			r *= 4000.0f / max;
 		}
-
-		if(setHighGear)
-		{
-			l *= 2.65;
-			r *= 2.65;
-		}
 	} else {
 		l *= 12;
 		r *= 12;
@@ -172,7 +128,7 @@ struct ShiftTankDrive::LogVals ShiftTankDrive::update(float forward, float turn,
 
 	enable();
 
-	motors_left->Set(l);//because the motors are rotated 180deg
+	motors_left->Set(l);
 	motors_right->Set(r);
 
 
@@ -184,8 +140,10 @@ struct ShiftTankDrive::LogVals ShiftTankDrive::update(float forward, float turn,
 		ret.values[2]=r;
 		ret.values[3]=r;
 
-		SmartDashboard::PutNumber("getencvelL", motors_left->GetSpeed());
-		SmartDashboard::PutNumber("getencvelR", motors_right->GetSpeed());
+		ret.speeds[0]=motors_left->GetSpeed();
+		ret.speeds[1]=motors_left->GetSpeed();
+		ret.speeds[2]=motors_right->GetSpeed();
+		ret.speeds[3]=motors_right->GetSpeed();
 	}
 	return ret;
 }

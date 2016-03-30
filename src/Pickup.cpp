@@ -17,8 +17,6 @@ Pickup::Pickup(INIReader *iniFile)
 			iniFile->getInt("Pickup", "PCMID"),
 			iniFile->getInt("Pickup", "solenoid2ChannelA"),
 			iniFile->getInt("Pickup", "solenoid2ChannelB"));
-	sensorA = new DigitalInput(iniFile->getInt("Pickup", "sensorAID"));
-	sensorB = new DigitalInput(iniFile->getInt("Pickup", "sensorBID"));
 
 	downTime = iniFile->getFloat("Pickup", "downTime");
 
@@ -76,22 +74,4 @@ void Pickup::pickupOnce()
 	setDown();
 	countdown = downTime;
 	pickupReady = false;
-}
-
-void Pickup::pickupOnceSensored()
-{
-	if(!pickupIsUp && pickupReady)
-	{
-		setUp();
-		return;
-	}
-	if(getSensorIsReady())
-	{
-		pickupOnce();
-	}
-}
-
-bool Pickup::getSensorIsReady()
-{
-	return (sensorA->Get() && sensorB->Get());
 }

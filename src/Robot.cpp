@@ -1,4 +1,5 @@
 #include <Auton.h>
+#include <math.h>
 #include "WPILib.h"
 #include "MotorControllers.h"
 #include "SolenoidControllers.h"
@@ -35,6 +36,13 @@ class Robot: public SampleRobot
 	int logTicker=0;
 	int logInterval;
 
+	int PDPID_leftPrimaryMotor;
+	int PDPID_leftSecondaryMotor;
+	int PDPID_rightPrimaryMotor;
+	int PDPID_rightSecondaryMotor;
+	int PDPID_lifterMotorA;
+	int PDPID_lifterMotorB;
+
 public:
 	Robot() :
 			controller_driver(0),
@@ -50,6 +58,13 @@ public:
 
 		compressor = new Compressor(iniFile.getInt("Pneumatics", "compressorPCMID"));
 		compressor->SetClosedLoopControl(true);
+
+		PDPID_leftPrimaryMotor = iniFile.getInt("PDP", "leftPrimaryMotor");
+		PDPID_leftSecondaryMotor = iniFile.getInt("PDP", "leftSecondaryMotor");
+		PDPID_rightPrimaryMotor = iniFile.getInt("PDP", "rightPrimaryMotor");
+		PDPID_rightSecondaryMotor = iniFile.getInt("PDP", "rightSecondaryMotor");
+		PDPID_lifterMotorA = iniFile.getInt("PDP", "lifterMotorA");
+		PDPID_lifterMotorB = iniFile.getInt("PDP", "lifterMotorB");
 
 		//LOGGER
 		logInterval = iniFile.getInt("Logger", "interval");
@@ -88,12 +103,10 @@ public:
 		std::string autoSelected = *((std::string*)chooser->GetSelected());
 		auton->initAuton(autoSelected);
 
-		while (IsAutonomous() && IsEnabled())
-		{
-			double dt = timer.getDt();
 
-			auton->runAuton(dt);
-		}
+		double dt = timer.getDt();
+		while (IsAutonomous() && IsEnabled() && auton->runAuton(dt))
+			dt = timer.getDt();
 	}
 
 	void OperatorControl()
@@ -104,8 +117,6 @@ public:
 		bool reverseMode = true;
 		double reverseDisabledCounter;
 		bool reverseDisabled = false;
-
-		bool highGear=false;
 
 		while (IsOperatorControl() && IsEnabled())
 		{
@@ -141,8 +152,13 @@ public:
 					shooter->shoot();
 			}
 
+			if(btns_operator[XBOX_BTN_BACK].isRising())
+				shooter->modifyRPM(-100);
+			if(btns_operator[XBOX_BTN_START].isRising())
+				shooter->modifyRPM(+100);
+
 			//TOGGLE PID MODE
-			if(btns_driver[XBOX_BTN_RB].isRising() || btns_operator[XBOX_BTN_RB].isRising())
+			if(btns_driver[XBOX_BTN_RB].isRising() || (btns_operator[XBOX_BTN_RB].isRising() && !btns_operator[XBOX_BTN_LB].getState()))
 			{
 				std->togglePIDMode();
 			}
@@ -154,52 +170,26 @@ public:
 				reverseDisabledCounter = -.2;
 			}
 
-			//LIFTER MANUAL
-			if(lifter->isManualMode())
+			//LIFTER
+			if(btns_operator[XBOX_BTN_LB].getState())
 			{
-				if(btns_operator[XBOX_BTN_LB].getState())
-				{
-					SmartDashboard::PutNumber("Lifter PWM", controller_operator.GetRawAxis(2) - controller_operator.GetRawAxis(3));
-					lifter->run(controller_operator.GetRawAxis(2) - controller_operator.GetRawAxis(3));
-				} else {
-					lifter->stop();
-				}
+				float val = controller_operator.GetRawAxis(2) - controller_operator.GetRawAxis(3);
+				if (logThisTime)
+					SmartDashboard::PutNumber("Lifter PWM", val);
+				lifter->run(val);
+				if(btns_operator[XBOX_BTN_RB].isRising())
+					lifter->toggleLock();
+			} else if(btns_operator[XBOX_BTN_LB].isFalling())
+			{
+				lifter->stop();
 			}
 
+			//PICKUP
 			if(btns_operator[XBOX_BTN_X].getState() && !btns_operator[XBOX_BTN_LB].getState())
-				pickerUpper->pickupOnceSensored();
+				pickerUpper->pickupOnce();
 
 			if(btns_operator[XBOX_BTN_X].isRising() && btns_operator[XBOX_BTN_LB].getState())
 				pickerUpper->togglePickup();
-
-			if(btns_driver[XBOX_BTN_A].isRising())
-				highGear = !highGear;
-
-			if(btns_operator[XBOX_BTN_BACK].isRising())
-				shooter->modifyRPM(-100);
-			if(btns_operator[XBOX_BTN_START].isRising())
-				shooter->modifyRPM(+100);
-
-			//LIFTER
-			if(lifter->isManualMode() == false)
-			{
-				if(controller_driver.GetPOV(0)==0)
-				{
-					if(btns_driver[XBOX_BTN_LB].getState())
-						lifter->setPotition(Lifter::Position::TOP);
-					else
-						lifter->setPotition(Lifter::Position::MIDDLE);
-				} else if(controller_driver.GetPOV(0)==180)
-					lifter->setPotition(Lifter::Position::BOTTOM);
-				if(controller_operator.GetPOV(0)==0)
-				{
-					if(btns_operator[XBOX_BTN_LB].getState())
-						lifter->setPotition(Lifter::Position::TOP);
-					else
-						lifter->setPotition(Lifter::Position::MIDDLE);
-				} else if(controller_operator.GetPOV(0)==180)
-					lifter->setPotition(Lifter::Position::BOTTOM);
-			}
 
 			if(reverseDisabled)
 			{
@@ -216,24 +206,16 @@ public:
 				forward = 0;
 			}
 
-			struct ShiftTankDrive::LogVals driveVals;
-			//TURN TO GOAL
-			if(btns_operator[XBOX_BTN_Y].getState())
-				driveVals = auton->turnToGoal(dt, logThisTime).driveVals;
-			else
-				driveVals = std->update(forward, rot, highGear, dt, logThisTime);
+			struct ShiftTankDrive::LogVals driveVals = std->update(forward, rot, dt, logThisTime);
 			struct Shooter::LogVals shooterVals = shooter->update(dt, logThisTime);
 			struct Pickup::LogVals pickupVals = pickerUpper->update(dt, logThisTime);
-			auton->update(dt);
 
 			//Logging
 			if(logThisTime)
 			{
 				logTicker = 0;
 				SmartDashboard::PutNumber("Total Amps:", pdp.GetTotalCurrent());
-				SmartDashboard::PutBoolean("Gear:", highGear);
 				SmartDashboard::PutNumber("dt:", dt);
-				SmartDashboard::PutBoolean("would pickup ball:", pickerUpper->getSensorIsReady());
 
 				struct Logger::CSVVals csvData;
 
@@ -242,18 +224,26 @@ public:
 				csvData.driveSetpoints[2] = driveVals.values[2];
 				csvData.driveSetpoints[3] = driveVals.values[3];
 
+				csvData.driveSpeeds[0] = driveVals.speeds[0];
+				csvData.driveSpeeds[1] = driveVals.speeds[1];
+				csvData.driveSpeeds[2] = driveVals.speeds[2];
+				csvData.driveSpeeds[3] = driveVals.speeds[3];
+
+				csvData.driveCurrents[0] = pdp.GetCurrent(PDPID_leftPrimaryMotor);
+				csvData.driveCurrents[1] = pdp.GetCurrent(PDPID_leftSecondaryMotor);
+				csvData.driveCurrents[2] = pdp.GetCurrent(PDPID_rightPrimaryMotor);
+				csvData.driveCurrents[3] = pdp.GetCurrent(PDPID_rightSecondaryMotor);
+
+				csvData.lifterCurrent = std::max(pdp.GetCurrent(PDPID_lifterMotorA), pdp.GetCurrent(PDPID_lifterMotorB));
+
 				csvData.voltage = pdp.GetVoltage();
 				csvData.totalCurrent = pdp.GetTotalCurrent();
-				csvData.driveCurrents[0] = pdp.GetCurrent(0);
-				csvData.driveCurrents[1] = pdp.GetCurrent(1);
-				csvData.driveCurrents[2] = pdp.GetCurrent(2);
-				csvData.driveCurrents[3] = pdp.GetCurrent(3);
+
 				csvData.shooterRPMActualL = shooterVals.RPMSActualL;
 				csvData.shooterRPMActualR = shooterVals.RPMSActualR;
 				csvData.shooterRPMSetpoint = shooterVals.RPMSetpoint;
 				csvData.shooterCylinderUp = shooterVals.cylinderUp;
-				csvData.psi = -1;
-				csvData.gear = highGear ? 2 : 1;
+
 				csvData.pickupIsUp = pickupVals.pickupIsUp;
 
 				Logger::instance()->logCSV(&csvData);

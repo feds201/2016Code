@@ -27,9 +27,6 @@ public:
 	void togglePickup();
 
 	void pickupOnce();
-	void pickupOnceSensored();
-
-	bool getSensorIsReady();
 
 private:
 	DigitalInput *sensorA;
