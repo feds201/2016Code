@@ -1,0 +1,57 @@
+>>>> Controls <<<<
+	Driver:
+		(drive)
+			Left stick (North/South): forward-backward
+			Right stick (East/West): rotate
+		
+			B: Toggle reverse control
+	
+		*** (Advanced) ***
+			Right Bumper: Toggle voltage control vs. PID control on drive-train
+			Left Bumper + A: Cycle linear shooter cylinder
+
+	Operator:
+		(Shooter)
+			A: Cycle linear shooter cylinder
+			Left Bumper + A: Toggle Shooter Wheels
+		
+		(Pickup)
+			Left Bumper + X: Toggle pickup [Up/Down]
+			<Unused> X: Pickup once w/ IR sensors		
+		
+		(Lifter)
+			Left Bumper + Right Bumper: Quick release lifter arms
+			Left Bumper + Right Trigger: Close arms
+			Left Bumper + Left Trigger: Open Arms
+		
+		*** (Advanced) ***
+			Start: Add 100 rpm to shooter wheels
+			Back: Sub 100 rpm from shooter wheels
+		
+			Right Bumper: Toggle voltage control vs. PID control on drive-train
+		
+>>>> NOTES <<<<
+	(Shooter Wheels)
+	The shooter wheels start at 8100 rpm; they are PID controlled.
+	The Wheels will overshoot on rpm at first, then level to 8100 rpm after approx. 2 seconds.
+	Shooting usually takes place while the wheels are over-speed. Good timing can 'aim' the ball's
+	trajectory.
+	
+	(Drive-Train Control Mode)
+	The drive train starts in PID controlled mode. Each controller has the ability to
+	turn off the PID mode in favor of the more primitive direct voltage control mode.
+	The PID mode is far superior at fine movements, turning, and cleanly crossing
+	the defenses, however it can take away from the reaction time of the robot. Essentally
+	it smoothes out the driver inputs. The driver may want to turn off PID mode to get a
+	better top speed, better responsiveness, or just if the driver prefers it.
+	
+	(Lifter Safety)
+	The lifter mechanism can tear the robot apart if used at the wrong time, or if it
+	is pushed too far. Before the quick release, the pickup box _needs_ to be down or
+	the lift arms catch on it. While lifting, the pickup should be closed. If the pickup 
+	box is closed after lifting, it will collide with the closed arms.
+	*** However, the operator shouldn't need be worried about these steps too much. If forgotten, 
+	the code will drop the pickup automatically instead of quick releasing the lifter on the first
+	press. Also, as soon as the lifter arms begin to close, the code will automatically lift the
+	pickup box.
+
